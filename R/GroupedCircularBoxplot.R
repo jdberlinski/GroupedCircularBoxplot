@@ -1,0 +1,537 @@
+# adapted from CircularBoxplot from Buttarazzi D., Pandolfo G., Porzio G.C. (2018). A boxplot for circular data, Biometrics.
+# modified by josh berlinski
+
+#' Create grouped circular boxplot
+#'
+#' @description does some stuff
+#'
+#' @param data_in List of circular objects to be plotted
+#' @param template One of "degrees", "radians", "geographics", or NULL
+#' @param place If template is NULL, either "outside" or "inside" denoting where the axis should be drawn
+#' @param units If template is NULL, units to use on the drawn axis
+#' @param shrink TODO
+#' @param H Logical indicating if each data point should be drawn in addition to the boxplot
+#' @param stack Logical indicating if drawn points should be stacked
+#' @param constant TODO
+#' @param rad_shift Scalar indicating the distance between each boxplot
+#' @param plot_cols Vector with the same length as `data_in`, specifying the color of the boxplot
+#' @param line_cols Vector with the same length as `data_in`, specifying the color of the median lines and arrows
+#' @param col_type String which doesn't do anything I thing
+#' @param legend_pos String indicating where the legend should be drawn, or "none" for no legend
+#' @param draw_arrow Logical specifying if arrows pointing to each median should be drawn
+#' @param ordinal Logical, if `template` is NULL and `units` is "geographics", should the ordinal directions also be drawn?
+#' @export
+#' @author Josh Berlinski
+GroupedCircularBoxplot <- function(
+  data_in,
+  template = "degrees",
+  place = "none",
+  units = "degrees",
+  marg = "large",
+  shrink = 1.6,
+  H = FALSE,
+  stack = FALSE,
+  constant = "optimal",
+  rad_shift = 0.5,
+  plot_cols = RColorBrewer::brewer.pal(8, "Set2"),
+  line_cols = RColorBrewer::brewer.pal(8, "Dark2"),
+  col_type = "fill",
+  legend_pos = "topleft",
+  draw_arrow = TRUE,
+  ordinal = FALSE
+) {
+
+  # let A be a list of vectors, each to be plotted
+  n_seq <- length(data_in)
+
+  if (length(plot_cols) < n_seq)
+    stop("Number of supplied colors is less than the number of sequences. Provide more colors.")
+
+  shift_val <- (0:(n_seq - 1)) * rad_shift
+
+  for (curr_seq in 1:n_seq) {
+    A <- data_in[[curr_seq]]
+    delta <- shift_val[curr_seq]
+
+    ##Check if Median is uniquely defined
+    if(is.na(circular::median.circular(A)))
+      stop("The median is not unique for this data set. \n The circular boxplot is not drawn.")
+
+    if(constant=="optimal"){
+      conc     <- circular::A1inv(circular::rho.circular(A))
+      q1       <- circular::qvonmises(0.25, mu=circular::circular(0), kappa = conc)
+      me       <- circular::qvonmises(0.5 , mu=circular::circular(0), kappa = conc)
+      q3       <- circular::qvonmises(0.75, mu=circular::circular(0), kappa = conc)
+      box      <- range(c(q1,me,q3))
+      q9965    <- circular::qvonmises(1-(0.007/2), mu=circular::circular(0),kappa = conc)
+      q0035    <- circular::qvonmises((0.007/2), mu=circular::circular(0),kappa = conc)
+      constant <- range(c(q9965,q3))/box
+    }
+
+    oldpar <- par(no.readonly = TRUE)
+    on.exit(par(oldpar))
+
+    if (marg == "small")
+      par(oma=c(0,0,0,0))
+    else if (marg == "large")
+      par(mai=c(0.0,0.0,0,0))
+
+    ## inspect and re-specify the input circular vector A.
+    if(!circular::is.circular(A)) stop("argument A must be entered as a vector of class circular")
+    set1 <- circular::conversion.circular(A, units = "radians", modulo="2pi", zero=0, rotation="counter")
+
+    ## median and IQR
+    x <- set1
+    AM <- circular::circular((circular::median.circular(x)+pi), modulo="2pi")
+    x <- as.vector(na.omit(replace(as.vector(x),as.vector(x)==as.vector(AM), NA)))
+    x2 <- as.matrix(sort(circular::circular( (x-AM), modulo="2pi")))
+
+    AnticlockRank <- as.matrix(seq(1,length(x2), by=1))
+    ClockRank     <- as.matrix(rev(seq(1,length(x2), by=1)))
+    Combined <- cbind(AnticlockRank,ClockRank)
+    Tukeyway <- numeric(length(x2))
+
+    for(i in 1:length(x2))
+      Tukeyway[i]   <- Combined[i,][which.min((Combined[i,]))]
+
+    OuterInward   <-  as.matrix(Tukeyway)
+    TukeyRanking <- as.matrix(cbind(circular::circular((x2+AM), modulo="2pi"),OuterInward))
+    colnames(TukeyRanking) <- c("observations",  "depth")
+
+    data <- TukeyRanking
+    data <- as.matrix(data)
+    CTM <- which(data[,2]>=which.max(data[,2]))
+    CTM <- circular::circular(mean( circular::circular(data[c(CTM), 1], modulo = "2pi")), modulo="2pi")
+
+    n <- length(x)
+    depthofmedian <- round(((1+n)/2)-0.1)
+    depthofquartiles <- (1+depthofmedian)/2
+
+    if (depthofquartiles%%1==0) {
+      quartiles <- which(data[,2] == round(1+depthofmedian)/2)
+      qA <-  circular::circular(as.vector(data[quartiles[1],1]),modulo="2pi")
+      qC <-  circular::circular(as.vector(data[quartiles[2],1]),modulo="2pi")
+    } else {
+      depthq1 <- depthofquartiles+0.5
+      depthq2 <- depthofquartiles-0.5
+      q1 <- which(data[,2] == depthq1)
+      q2 <- which(data[,2] == depthq2)
+      qA  <- mean(circular::circular(data[c(q1[1],c(q2[1])),1], modulo="2pi"))
+      qC  <- mean(circular::circular(data[c(q1[2],c(q2[2])),1], modulo="2pi"))
+    }
+
+    IQRdepth <- which(data[,2] >= depthofquartiles)
+    IQR <- c(data[IQRdepth,1],qA,qC)
+    IQRange <- range(c(qA,qC))
+
+    set_1 <- set1
+    fi <- circular::as.circular(CTM)
+
+    ##drawing the template
+    if (curr_seq == 1) {
+      circular::plot.circular(
+        circular::circular(NA, modulo = "2pi"),
+        cex=0.5, axes=FALSE, shrink=shrink,
+        template=NULL, control.circle=circular::circle.control(col="gray60", lty=2, lwd=0.5),
+        xlim = c(- 1 - max(shift_val), 1 + max(shift_val))
+      )
+
+      if (legend_pos != "none") {
+        if (is.null(names(data_in)))
+          names(data_in) <- 1:length(data_in)
+        legend(
+          legend_pos,
+          legend = names(data_in),
+          fill = plot_cols[1:length(data_in)]
+        )
+      }
+
+      if (is.null(template)) {
+        rad_grid <- seq(0, 315, by = 45)
+        lab_coord <- cbind(
+          cos(circular::rad(circular::circular(rad_grid))),
+          sin(circular::rad(circular::circular(rad_grid)))
+        )
+
+        # this is awkward
+        if (place == "outside" && units == "degrees") {
+          plotrix::draw.arc(0, 0, 1.15, 0, 2 * pi, col = "burlywood4")
+          bline <- c(1.09, 1.15)
+          aline <- c(0, 1.08)
+          ax_labels <- as.character(rad_grid)
+          tmult <- 1.23
+        } else if (place == "inside" && units == "degrees") {
+          plotrix::draw.arc(0, 0, 0.7, 0, 2 * pi, col = "burlywood4")
+          bline <- c(0.64, 0.7)
+          aline <- c(0, 0.93)
+          ax_labels <- as.character(rad_grid)
+          tmult <- 0.5
+        } else if (place == "outside" && units == "radians") {
+          plotrix::draw.arc(0, 0, 1.15, 0, 2 * pi, col = "burlywood4")
+          bline <- c(1.09, 1.15)
+          aline <- c(0, 1.08)
+          ax_labels <- c(expression(0, frac(pi, 4), frac(pi, 2), frac(3*pi, 4), pi, frac(5*pi, 4), frac(3*pi, 2), frac(7*pi, 4)))
+          tmult <- 1.3
+        } else if (place == "inside" && units == "radians") {
+          plotrix::draw.arc(0, 0, 0.7, 0, 2 * pi, col = "burlywood4")
+          bline <- c(0.64, 0.7)
+          aline <- c(0, 0.93)
+          ax_labels <- c(expression(0, frac(pi, 4), frac(pi, 2), frac(3*pi, 4), pi, frac(5*pi, 4), frac(3*pi, 2), frac(7*pi, 4)))
+          tmult <- 0.45
+        } else if (place == "outside" && units == "geographics") {
+          if (ordinal) {
+            ax_labels <- c("E", "NE", "N", "NW", "W", "SW", "S", "SE")
+            rad_grid <- c(0, 45, 90, 135, 180, 225, 270, 315)
+          } else {
+            ax_labels <- c("E", "N", "W", "S")
+            rad_grid <- c(0, 90, 180, 270)
+          }
+          tmult <- 1
+          lab_coord <- cbind(
+            cos(circular::rad(circular::circular(rad_grid))),
+            sin(circular::rad(circular::circular(rad_grid)))
+          )
+          shift <- max(shift_val) + 1
+          coord_offset <- cbind(
+            shift * cos(circular::rad(circular::circular(rad_grid))),
+            shift * sin(circular::rad(circular::circular(rad_grid)))
+          )
+          lab_coord <- lab_coord + coord_offset
+
+          for (i in seq_along(rad_grid)) {
+            if (i < length(rad_grid))
+              plotrix::draw.arc(0, 0, shift + 1, deg1 = rad_grid[i] + 2, deg2 = rad_grid[i + 1] - 2, col = 1, lwd = 2, lty = 1)
+            else
+              plotrix::draw.arc(0, 0, shift + 1, deg1 = rad_grid[i] + 2, deg2 = 358, col = 1, lwd = 2, lty = 1)
+          }
+          text(
+            tmult * circular::circular(lab_coord[, 1]), tmult * circular::circular(lab_coord[, 2]),
+            labels = ax_labels, col = "black", cex = 1
+          )
+        }
+
+        if (units != "geographics") {
+          for (i in rad_grid) {
+            plotrix::draw.radial.line(aline[1], aline[2], center = c(0, 0), i, col = "azure2", lty = 2)
+            plotrix::draw.radial.line(bline[1], bline[2], center = c(0, 0), i, col = "burlywood4", lty = 2)
+          }
+          text(
+            tmult * circular::circular(lab_coord[, 1]), tmult * circular::circular(lab_coord[, 2]),
+            labels = ax_labels, col = "burlywood4", cex = 0.6
+          )
+        }
+      } else {
+        lab_coord <- cbind(
+          cos(circular::rad(circular::circular(c(0,90,180,270)))),
+          sin(circular::rad(circular::circular(c(0,90,180,270))))
+        )
+        if(template=="degrees") {
+          ax_labels <- c("0","90","180","270")
+          tmult <- 0.82
+        } else if(template=="radians") {
+          ax_labels <- c(expression(0,frac(pi,2),pi,frac(3*pi,2)))
+          tmult <- 0.65
+        } else if(template=="geographics") {
+          ax_labels <- c("E","N","W","S")
+          tmult <- 0.82
+        }
+
+        text(
+          tmult * circular::circular(lab_coord[,1], units = "radians"), tmult * circular::circular(lab_coord[,2], units = "radians"),
+          labels = ax_labels, cex=0.6
+        )
+      }
+    } else {
+      plotrix::draw.arc(0,0,1 + delta,0,2*pi, col="gray60", lty=2, lwd = 0.5)
+    }
+
+    ##drawing the plot
+    if (H)
+      points(circular::circular(set_1), cex=0.75, start.sep = delta)
+
+    points(circular::circular(IQR, modulo = "2pi"), cex=1.1, col="white", start.sep = delta)
+
+    ## controlling wrap-around effect in case of median at pi (180?)
+    if (circular::rad(round(circular::deg(circular::circular((fi+pi), modulo="2pi")))) == 0) {
+      fi <- pi
+      AM<- 2*pi
+    } else {
+      AM <- circular::rad(round(circular::deg(circular::circular((fi+pi), modulo="2pi"))))
+    }
+
+    ## controlling wrap-around effect
+    if (circular::range.circular(circular::circular(IQR, modulo = "2pi"))< ((2*pi)/(2*(constant + (1/2)))) ) {
+      if (fi<pi) {
+        setAnti <- subset(IQR, IQR>=fi & IQR<=AM)
+        setClock<- subset(IQR, IQR<=fi | IQR>=AM)
+        QAnti   <- circular::rad(round(circular::deg(circular::circular(max(setAnti), modulo="2pi"))))
+        Qc      <- QAnti-circular::rad(round(circular::deg(circular::range.circular(circular::circular(IQR, modulo = "2pi")))))
+        QClock  <- circular::rad(round(circular::deg(circular::circular(Qc, modulo="2pi"))))
+
+        grid <- seq(Qc, QAnti, by=0.001)
+        ngrid <- length(grid)
+        box_color <- ifelse(col_type == "fill", plot_cols[curr_seq], "gray80")
+
+        astart <- QAnti
+        aend <- Qc
+
+        d <- (circular::rad(round(circular::deg(circular::range.circular(circular::circular(IQR, modulo = "2pi"))))))
+
+
+        fA<- circular::rad(round(circular::deg(QAnti + d*constant)))
+        fC<- circular::rad(round(circular::deg(QClock - d*constant)))
+
+        semicircleClock <- subset(as.vector(set_1),as.vector(set_1)<=fi | as.vector(set_1)>=AM)
+        semicircleAnti <- subset(as.vector(set_1),as.vector(set_1)>=fi & as.vector(set_1)<=AM)
+
+        semicircleClock <- c(semicircleClock, QClock)
+        semicircleAnti <- c(semicircleAnti, QAnti)
+        if (fC<0) {
+          swc <- subset(semicircleClock, semicircleClock>= circular::rad(round(circular::deg(circular::circular(fC, modulo="2pi"))))| semicircleClock<= QClock)
+          swc <- c(swc, QClock)
+          whiskerC <- circular::range.circular(circular::circular(swc))
+          wC <- QClock-whiskerC
+          faroutClock  <- subset(semicircleClock, semicircleClock>=AM & semicircleClock<circular::rad(round(circular::deg(circular::circular(fC, modulo="2pi")))))
+        }
+        else if (fC>=0 & QClock>=pi){
+          swc <- subset(semicircleClock, semicircleClock>=fC)
+          swc <- c(swc, QClock)
+          wC <- min(swc)
+          faroutClock <- subset(semicircleClock, semicircleClock>=AM & semicircleClock<fC)
+        }
+        else if (fC>=0 & QClock<pi){
+          swc <- subset(semicircleClock, semicircleClock>=fC)
+          swc <- c(swc, QClock)
+          wC <- min(swc)
+          faroutClock <- subset(semicircleClock, semicircleClock>=AM | semicircleClock<fC)
+        }
+
+        swa <- subset(semicircleAnti, semicircleAnti<=fA)
+        swa <- c(swa, QAnti)
+        wA <- max(swa)
+
+        faroutAnti  <- subset(semicircleAnti, semicircleAnti>fA)
+      } else if (fi==pi) {
+        setAnti <- subset(IQR, IQR>=fi & IQR<=2*pi)
+        setClock<- subset(IQR, IQR<=fi | IQR>=0)
+        QAnti   <- circular::rad(round(circular::deg(circular::circular(max(setAnti), modulo="2pi"))))
+        Qc      <- QAnti-circular::rad(round(circular::deg(circular::range.circular(circular::circular(IQR, modulo = "2pi")))))
+        QClock  <- circular::rad(round(circular::deg(circular::circular(Qc, modulo="2pi"))))
+
+        grid <- seq(Qc, QAnti, by=0.001)
+        ngrid <- length(grid)
+        box_color <- ifelse(col_type == "fill", plot_cols[curr_seq], "gray80")
+
+        astart <- QAnti
+        aend <- Qc
+
+        d <- (circular::rad(round(circular::deg(circular::range.circular(circular::circular(IQR, modulo = "2pi"))))))
+        fA<- circular::rad(round(circular::deg(QAnti + d*constant)))
+        fC<- circular::rad(round(circular::deg(QClock - d*constant)))
+
+        semicircleClock <- subset(as.vector(set_1),as.vector(set_1)<=fi | as.vector(set_1)>= 0)
+        semicircleAnti <- subset(as.vector(set_1),as.vector(set_1)>=fi & as.vector(set_1)<= 2*pi)
+
+        semicircleClock <- c(semicircleClock, QClock)
+        semicircleAnti <- c(semicircleAnti, QAnti)
+        if (fC<0) {
+          swc <- subset(semicircleClock, semicircleClock>= circular::rad(round(circular::deg(circular::circular(fC, modulo="2pi"))))| semicircleClock<= QClock)
+          swc <- c(swc, QClock)
+          whiskerC <- circular::range.circular(circular::circular(swc))
+          wC <- QClock-whiskerC
+          faroutClock  <- subset(semicircleClock, semicircleClock>=0 & semicircleClock<circular::rad(round(circular::deg(circular::circular(fC, modulo="2pi")))))
+        } else if (fC>=0){
+          swc <- subset(semicircleClock, semicircleClock>=fC)
+          swc <- c(swc, QClock)
+          wC <- min(swc)
+          faroutClock <- subset(semicircleClock, semicircleClock>=0 & semicircleClock<fC)
+        }
+        swa <- subset(semicircleAnti, semicircleAnti<=fA)
+        swa <- c(swa, QAnti)
+        wA <- max(swa)
+        faroutAnti  <- subset(semicircleAnti, semicircleAnti>fA)
+      } else if (fi>pi) {
+        setAnti <- subset(IQR, IQR>=fi | IQR<=AM)
+        setClock<- subset(IQR, IQR<=fi & IQR>=AM)
+        QClock   <- min(setClock)
+        Qa      <- QClock+circular::range.circular(circular::circular(IQR, modulo = "2pi"))
+        QAnti  <- circular::rad(round(circular::deg(circular::circular(Qa, modulo="2pi"))))
+
+        grid <- seq(QClock, Qa, by=0.001)
+        ngrid <- length(grid)
+        box_color <- ifelse(col_type == "fill", plot_cols[curr_seq], "gray80")
+
+        astart <- QClock
+        aend <- Qa
+
+        ## defining the whiskers
+        d <- circular::range.circular(circular::circular(IQR, modulo = "2pi"))
+        fC<- circular::rad(round(circular::deg(QClock - d*constant)))
+        fA<- circular::rad(round(circular::deg(QAnti + d*constant)))
+        semicircleClock <- subset(as.vector(set_1),as.vector(set_1)<=fi & as.vector(set_1)>=AM)
+        semicircleAnti <- subset(as.vector(set_1),as.vector(set_1)>=fi | as.vector(set_1)<=AM)
+
+        semicircleClock <- c(semicircleClock, QClock)
+        semicircleAnti <- c(semicircleAnti, QAnti)
+        swc <- subset(semicircleClock, semicircleClock>=fC)
+        swc <- c(swc, QClock)
+        wC <- min(swc)
+        faroutClock <- subset(semicircleClock, semicircleClock<fC )
+
+        if (fA>2*pi ) {
+          swa <- subset(semicircleAnti, semicircleAnti<= circular::rad(round(circular::deg(circular::circular(fA, modulo="2pi")))) | semicircleAnti>= circular::rad(round(circular::deg(circular::circular(QAnti, modulo="2pi")))))
+          swa <- c(swa, QAnti)
+          whiskerA <- circular::range.circular(circular::circular(swa))
+          wA <- QAnti+whiskerA
+          faroutAnti <- subset(semicircleAnti, semicircleAnti> circular::circular(fA, modulo = "2pi") & semicircleAnti <= AM )
+        } else if (fA<=2*pi & QAnti>=pi) {
+          swa <- subset(semicircleAnti, semicircleAnti<=fA)
+          swa <- c(swa, QAnti)
+          wA <- max(swa)
+          faroutAnti <- subset(semicircleAnti, semicircleAnti>fA | semicircleAnti<= AM  )
+        } else if (fA<=2*pi & QAnti<pi) {
+          swa <- subset(semicircleAnti, semicircleAnti<=fA)
+          swa <- c(swa, QAnti)
+          wA <- max(swa)
+          faroutAnti <- subset(semicircleAnti, semicircleAnti>fA & semicircleAnti<= AM  )
+        }
+      }
+
+
+      ## plotting and printing far out values
+      faroutvalues1 <- c(faroutClock, faroutAnti)
+      compare <- set_1
+      faroutvalues2 <- compare[compare %in% faroutvalues1]
+      faroutvalues <- circular::as.circular(circular::circular(faroutvalues2), modulo="2pi")
+      farout<- as.matrix(faroutvalues2)
+      colnames(farout) <- c("Far out values")
+
+      if (H) {
+        circular::points.circular(faroutvalues, cex=0.8, col="white", start.sep = delta)
+        circular::points.circular(faroutvalues, cex=0.8, pch=8, start.sep = delta)
+      } else {
+        if (stack)
+          circular::points.circular(faroutvalues, cex=0.6, stack=stack, bins=500, sep=0.1, pch=8, start.sep = delta)
+        else
+          circular::points.circular(faroutvalues, cex=0.6, stack=stack, pch=8, start.sep = delta)
+      }
+    } else {
+      # case when range(box)>= (360/2(c+1/2))
+      if (fi<=pi) {
+        setAnti <- subset(IQR, IQR>=fi & IQR<=AM)
+        setClock<- subset(IQR, IQR<=fi | IQR>=AM)
+        QAnti   <- circular::rad(round(circular::deg(circular::circular(max(setAnti), modulo="2pi"))))
+        Qc      <- QAnti-circular::range.circular(circular::circular(IQR, modulo = "2pi"))
+        QClock  <- circular::rad(round(circular::deg(circular::circular(Qc, modulo="2pi"))))
+
+        grid <- seq(Qc, QAnti, by=0.001)
+        ngrid <- length(grid)
+        box_color <- ifelse(col_type == "fill", plot_cols[curr_seq], "gray80")
+
+        astart <- QAnti
+        aend <- Qc
+
+        ## defining the whiskers
+        semicircleClock <- subset(as.vector(set_1),as.vector(set_1)<=fi | as.vector(set_1)>=AM)
+        semicircleAnti <- subset(as.vector(set_1),as.vector(set_1)>=fi & as.vector(set_1)<=AM)
+
+        semicircleClock <- c(semicircleClock, QClock)
+        semicircleAnti <- c(semicircleAnti, QAnti)
+        if (QClock <= pi){
+          swc <- subset(semicircleClock, semicircleClock >= AM | semicircleClock <= QClock)
+        }
+        else if (QClock > pi){
+          swc <- subset(semicircleClock, semicircleClock >= AM & semicircleClock <= QClock)
+        }
+
+        whiskerC <- circular::range.circular(circular::circular(swc))
+        wC <- QClock-whiskerC
+
+        swa <- subset(semicircleAnti, semicircleAnti<=AM)
+        wA <- max(swa)
+      } else if (fi>=pi) {
+        setAnti <- subset(IQR, IQR>=fi | IQR<=AM)
+        setClock<- subset(IQR, IQR<=fi & IQR>=AM)
+        QClock   <- min(setClock)
+        Qa      <- QClock+circular::range.circular(circular::circular(IQR, modulo = "2pi"))
+        QAnti  <- circular::rad(round(circular::deg(circular::circular(Qa, modulo="2pi"))))
+
+        grid <- seq(QClock, Qa, by=0.001)
+        ngrid <- length(grid)
+        box_color <- ifelse(col_type == "fill", plot_cols[curr_seq], "gray80")
+
+        astart <- QClock
+        aend <- Qa
+
+        semicircleClock <- subset(as.vector(set_1),as.vector(set_1)<=fi & as.vector(set_1)>=AM)
+        semicircleAnti <- subset(as.vector(set_1),as.vector(set_1)>=fi | as.vector(set_1)<=AM)
+        semicircleClock <- c(semicircleClock, QClock)
+        semicircleAnti <- c(semicircleAnti, QAnti)
+        swc <- subset(semicircleClock, semicircleClock>=AM)
+        wC <- min(swc)
+
+        if(QAnti<pi){
+          swa <- subset(semicircleAnti, semicircleAnti<=AM & semicircleAnti >= QAnti)
+        }
+        else if(QAnti>pi){
+          swa <- subset(semicircleAnti, semicircleAnti<=AM | semicircleAnti >= QAnti)
+        }
+        whiskerA <- circular::range.circular(circular::circular(swa))
+        wA <- QAnti+whiskerA
+      }
+    }
+
+    # draw the plot
+    ### 1
+    for(i in 1:ngrid)
+      plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center = c(0,0), grid[i], col = box_color, lwd = 2)
+    ### 2
+    plotrix::draw.arc(0,0,1.1 + delta,astart,aend,col=1,lwd=2)
+    plotrix::draw.arc(0,0,0.9 + delta,astart,aend,col=1,lwd=2)
+    ### 3
+    plotrix::draw.radial.line(0.9 + delta,1.1 + delta,center=c(0,0),QAnti,col=1,lwd=2)
+    plotrix::draw.radial.line(0.9 + delta,1.1 + delta,center=c(0,0),QClock,col=1,lwd=2)
+    ### 4
+    plotrix::draw.arc(0,0,1 + delta,wC,QClock,col=1,lwd=2, lty=1)
+    plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wC,col=1,lwd=2)
+    ### 5
+    plotrix::draw.arc(0,0,1 + delta,wA,QAnti,col=1,lwd=2, lty=1)
+    plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wA,col=1,lwd=2)
+
+    gradi <- (as.matrix(circular::deg(data[,1])))
+    output <- as.matrix(cbind(data,gradi))
+    colnames(output) <- c("Obs.Radians", "Ranking", "Obs.Degrees")
+    ##print(output)
+
+    ## drawing an arrow indicating the median
+    # med_color <- ifelse(col_type == "fill", 1, line_cols[curr_seq])
+    plotrix::draw.radial.line(0.905 + delta, 1.095 + delta, center = c(0,0), CTM, col = line_cols[curr_seq], lwd = 2)
+    # arrows.circular(CTM, 0.78, col = line_cols[curr_seq], angle = 30, length = 0.1, )
+    if (draw_arrow)
+      plotrix::arrows.circular(CTM, 0.7, col = line_cols[curr_seq], angle = 30, length = 0.1, lwd = 2)
+
+    ## output object
+    out = list()
+    if(exists("faroutvalues")==TRUE){
+      if(length(faroutvalues)!=0){out$farout = faroutvalues}
+      else{out$farout = c("no far out values detected")}
+    }
+    else{out$farout = c("no far out values detected")}
+
+    out$constant = constant
+
+    summaryStatistics = data.frame(
+      CircularMedian = as.numeric(circular::deg(circular::circular(fi, modulo="2pi"))),
+      CounterClockwiseHinge = as.numeric(circular::deg(circular::circular(QAnti, modulo="2pi"))),
+      ClockwiseHinge = as.numeric(circular::deg(circular::circular(QClock, modulo="2pi"))),
+      CounterClockwiseWhisker = as.numeric(circular::deg(circular::circular(wA, modulo="2pi"))),
+      ClockwiseWhisker = as.numeric(circular::deg(circular::circular(wC, modulo="2pi")))
+    )
+
+    out$statistics = summaryStatistics
+
+  }
+  points(0,0,pch=21, bg=1,  cex=1.1) # redraw center point, for fun
+  return(invisible(out))
+
+}
