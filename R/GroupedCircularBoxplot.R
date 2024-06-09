@@ -508,7 +508,7 @@ GroupedCircularBoxplot <- function(
     plotrix::draw.radial.line(0.905 + delta, 1.095 + delta, center = c(0,0), CTM, col = line_cols[curr_seq], lwd = 2)
     # arrows.circular(CTM, 0.78, col = line_cols[curr_seq], angle = 30, length = 0.1, )
     if (draw_arrow)
-      plotrix::arrows.circular(CTM, 0.7, col = line_cols[curr_seq], angle = 30, length = 0.1, lwd = 2)
+      circular::arrows.circular(CTM, 0.7, col = line_cols[curr_seq], angle = 30, length = 0.1, lwd = 2)
 
     ## output object
     out = list()
