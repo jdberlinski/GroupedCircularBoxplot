@@ -21,6 +21,8 @@
 #' @param legend_title String indicating legend for title, if necessary
 #' @param draw_arrow Logical specifying if arrows pointing to each median should be drawn
 #' @param ordinal Logical, if `template` is NULL and `units` is "geographics", should the ordinal directions also be drawn?
+#' @param template_options If template is "custom", a list containing named elements "ax_labels" and "lab_coord" which
+#' correspond to the axis labels and their location in degrees, to be placed on the outside of the plot.
 #' @export
 #' @author Josh Berlinski
 GroupedCircularBoxplot <- function(
@@ -40,7 +42,8 @@ GroupedCircularBoxplot <- function(
   legend_pos = "topleft",
   legend_title = NULL,
   draw_arrow = TRUE,
-  ordinal = FALSE
+  ordinal = FALSE,
+  template_options = NULL
 ) {
 
   # let A be a list of vectors, each to be plotted
@@ -213,7 +216,7 @@ GroupedCircularBoxplot <- function(
           )
         }
 
-        if (units != "geographics") {
+        if (units != "geographics" && !is.null(units)) {
           for (i in rad_grid) {
             plotrix::draw.radial.line(aline[1], aline[2], center = c(0, 0), i, col = "azure2", lty = 2)
             plotrix::draw.radial.line(bline[1], bline[2], center = c(0, 0), i, col = "burlywood4", lty = 2)
@@ -223,6 +226,25 @@ GroupedCircularBoxplot <- function(
             labels = ax_labels, col = "burlywood4", cex = 0.6
           )
         }
+      } else if (template == "custom") {
+        ax_labels <- template_options$ax_labels
+        rad_grid <- template_options$lab_coord
+        tmult <- 1 #TODO: let there be an option
+        lab_coord <- cbind(
+          cos(circular::rad(circular::circular(rad_grid))),
+          sin(circular::rad(circular::circular(rad_grid)))
+        )
+        shift <- max(shift_val) + 1
+        coord_offset <- cbind(
+          shift * cos(circular::rad(circular::circular(rad_grid))),
+          shift * sin(circular::rad(circular::circular(rad_grid)))
+        )
+        lab_coord <- lab_coord + coord_offset
+        text(
+          tmult * circular::circular(lab_coord[, 1]), tmult * circular::circular(lab_coord[, 2]),
+          labels = ax_labels, col = "black", cex = 1
+        )
+
       } else {
         lab_coord <- cbind(
           cos(circular::rad(circular::circular(c(0,90,180,270)))),
