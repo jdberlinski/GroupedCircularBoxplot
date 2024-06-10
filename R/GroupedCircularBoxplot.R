@@ -230,16 +230,23 @@ GroupedCircularBoxplot <- function(
         ax_labels <- template_options$ax_labels
         rad_grid <- template_options$lab_coord
         tmult <- 1 #TODO: let there be an option
+        shift_mod <- template_options$shift
         lab_coord <- cbind(
           cos(circular::rad(circular::circular(rad_grid))),
           sin(circular::rad(circular::circular(rad_grid)))
         )
         shift <- max(shift_val) + 1
         coord_offset <- cbind(
-          shift * cos(circular::rad(circular::circular(rad_grid))),
-          shift * sin(circular::rad(circular::circular(rad_grid)))
+          (shift + shift_mod)* cos(circular::rad(circular::circular(rad_grid))),
+          (shift + shift_mod) * sin(circular::rad(circular::circular(rad_grid)))
         )
         lab_coord <- lab_coord + coord_offset
+
+        if (template_options$gridlines) {
+          for (i in seq_along(rad_grid))
+            plotrix::draw.radial.line(1, shift, center = c(0, 0), deg = rad_grid[i], col = "gray60", lty = 2, lwd = 0.5)
+        }
+
         text(
           tmult * circular::circular(lab_coord[, 1]), tmult * circular::circular(lab_coord[, 2]),
           labels = ax_labels, col = "black", cex = 1
