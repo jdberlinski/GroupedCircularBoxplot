@@ -18,6 +18,7 @@
 #' @param line_cols Vector with the same length as `data_in`, specifying the color of the median lines and arrows
 #' @param col_type String which doesn't do anything I thing
 #' @param legend_pos String indicating where the legend should be drawn, or "none" for no legend
+#' @param legend_title String indicating legend for title, if necessary
 #' @param draw_arrow Logical specifying if arrows pointing to each median should be drawn
 #' @param ordinal Logical, if `template` is NULL and `units` is "geographics", should the ordinal directions also be drawn?
 #' @export
@@ -37,6 +38,7 @@ GroupedCircularBoxplot <- function(
   line_cols = RColorBrewer::brewer.pal(8, "Dark2"),
   col_type = "fill",
   legend_pos = "topleft",
+  legend_title = NULL,
   draw_arrow = TRUE,
   ordinal = FALSE
 ) {
@@ -142,7 +144,8 @@ GroupedCircularBoxplot <- function(
         legend(
           legend_pos,
           legend = names(data_in),
-          fill = plot_cols[1:length(data_in)]
+          fill = plot_cols[1:length(data_in)],
+          title = legend_title
         )
       }
 
