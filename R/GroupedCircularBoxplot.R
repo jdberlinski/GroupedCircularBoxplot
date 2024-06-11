@@ -73,8 +73,9 @@ GroupedCircularBoxplot <- function(
       constant <- range(c(q9965,q3))/box
     }
 
-    oldpar <- par(no.readonly = TRUE)
-    on.exit(par(oldpar))
+    # TODO: find some way to reset the graphics parameters without nuking layouts
+    # oldpar <- par(no.readonly = TRUE)
+    # on.exit(par(oldpar))
 
     if (marg == "small")
       par(oma=c(0,0,0,0))
