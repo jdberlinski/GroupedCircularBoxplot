@@ -9,20 +9,23 @@
 #' @param template One of "degrees", "radians", "geographics", or NULL
 #' @param place If template is NULL, either "outside" or "inside" denoting where the axis should be drawn
 #' @param units If template is NULL, units to use on the drawn axis
-#' @param shrink TODO
-#' @param H Logical indicating if each data point should be drawn in addition to the boxplot
+#' @param shrink Numeric specifying the factor by which to scale the plot. Numbers less than 1 will increase the size.
+#' @param H Logical indicating if each data point should be drawn outside the hinges of the boxplot
 #' @param stack Logical indicating if drawn points should be stacked
-#' @param constant TODO
+#' @param constant Numeric specifying the multiplicative factor determining how far whiskers extend from box. A value of
+#' "optimal" will choose values based on a von Mises distribution (see Buttarazzi et al. 2018)
 #' @param rad_shift Scalar indicating the distance between each boxplot
 #' @param plot_cols Vector with the same length as `data_in`, specifying the color of the boxplot
 #' @param line_cols Vector with the same length as `data_in`, specifying the color of the median lines and arrows
-#' @param col_type String which doesn't do anything I thing
 #' @param legend_pos String indicating where the legend should be drawn, or "none" for no legend
 #' @param legend_title String indicating legend for title, if necessary
 #' @param draw_arrow Logical specifying if arrows pointing to each median should be drawn
 #' @param ordinal Logical, if `template` is NULL and `units` is "geographics", should the ordinal directions also be drawn?
-#' @param template_options If template is "custom", a list containing named elements "ax_labels" and "lab_coord" which
-#' correspond to the axis labels and their location in degrees, to be placed on the outside of the plot.
+#' @param template_options If template is "custom", a list containing named elements "ax_labels", "lab_coord", "shift",
+#' and "gridlines." `ax_labels` is a character vector of axis labels to be plotted at the locations `lab_coord`, a
+#' numeric vector in degrees counterclockwise starting from 0. `shift` is a numeric value that controls how far outside
+#' the last boxplot the axis should be drawn, and `gridlines` is a logical indicating if dashed lines should be drawn at
+#' the specified axis labels.
 #' @export
 #' @author Josh Berlinski
 GroupedCircularBoxplot <- function(
@@ -31,14 +34,13 @@ GroupedCircularBoxplot <- function(
   place = "none",
   units = "degrees",
   marg = "large",
-  shrink = 1.6,
+  shrink = 1,
   H = FALSE,
   stack = FALSE,
   constant = "optimal",
   rad_shift = 0.5,
   plot_cols = RColorBrewer::brewer.pal(8, "Set2"),
   line_cols = RColorBrewer::brewer.pal(8, "Dark2"),
-  col_type = "fill",
   legend_pos = "topleft",
   legend_title = NULL,
   draw_arrow = TRUE,
@@ -303,7 +305,6 @@ GroupedCircularBoxplot <- function(
 
         grid <- seq(Qc, QAnti, by=0.001)
         ngrid <- length(grid)
-        box_color <- ifelse(col_type == "fill", plot_cols[curr_seq], "gray80")
 
         astart <- QAnti
         aend <- Qc
@@ -353,7 +354,6 @@ GroupedCircularBoxplot <- function(
 
         grid <- seq(Qc, QAnti, by=0.001)
         ngrid <- length(grid)
-        box_color <- ifelse(col_type == "fill", plot_cols[curr_seq], "gray80")
 
         astart <- QAnti
         aend <- Qc
@@ -392,7 +392,6 @@ GroupedCircularBoxplot <- function(
 
         grid <- seq(QClock, Qa, by=0.001)
         ngrid <- length(grid)
-        box_color <- ifelse(col_type == "fill", plot_cols[curr_seq], "gray80")
 
         astart <- QClock
         aend <- Qa
@@ -459,7 +458,6 @@ GroupedCircularBoxplot <- function(
 
         grid <- seq(Qc, QAnti, by=0.001)
         ngrid <- length(grid)
-        box_color <- ifelse(col_type == "fill", plot_cols[curr_seq], "gray80")
 
         astart <- QAnti
         aend <- Qc
@@ -491,7 +489,6 @@ GroupedCircularBoxplot <- function(
 
         grid <- seq(QClock, Qa, by=0.001)
         ngrid <- length(grid)
-        box_color <- ifelse(col_type == "fill", plot_cols[curr_seq], "gray80")
 
         astart <- QClock
         aend <- Qa
@@ -517,7 +514,7 @@ GroupedCircularBoxplot <- function(
     # draw the plot
     ### 1
     for(i in 1:ngrid)
-      plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center = c(0,0), grid[i], col = box_color, lwd = 2)
+      plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center = c(0,0), grid[i], col = plot_cols[curr_seq], lwd = 2)
     ### 2
     plotrix::draw.arc(0,0,1.1 + delta,astart,aend,col=1,lwd=2)
     plotrix::draw.arc(0,0,0.9 + delta,astart,aend,col=1,lwd=2)

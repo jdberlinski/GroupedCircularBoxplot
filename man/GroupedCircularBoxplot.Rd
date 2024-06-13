@@ -10,17 +10,18 @@ GroupedCircularBoxplot(
   place = "none",
   units = "degrees",
   marg = "large",
-  shrink = 1.6,
+  shrink = 1,
   H = FALSE,
   stack = FALSE,
   constant = "optimal",
   rad_shift = 0.5,
   plot_cols = RColorBrewer::brewer.pal(8, "Set2"),
   line_cols = RColorBrewer::brewer.pal(8, "Dark2"),
-  col_type = "fill",
   legend_pos = "topleft",
+  legend_title = NULL,
   draw_arrow = TRUE,
-  ordinal = FALSE
+  ordinal = FALSE,
+  template_options = NULL
 )
 }
 \arguments{
@@ -32,13 +33,14 @@ GroupedCircularBoxplot(
 
 \item{units}{If template is NULL, units to use on the drawn axis}
 
-\item{shrink}{TODO}
+\item{shrink}{Numeric specifying the factor by which to scale the plot. Numbers less than 1 will increase the size.}
 
-\item{H}{Logical indicating if each data point should be drawn in addition to the boxplot}
+\item{H}{Logical indicating if each data point should be drawn outside the hinges of the boxplot}
 
 \item{stack}{Logical indicating if drawn points should be stacked}
 
-\item{constant}{TODO}
+\item{constant}{Numeric specifying the multiplicative factor determining how far whiskers extend from box. A value of
+"optimal" will choose values based on a von Mises distribution (see Buttarazzi et al. 2018)}
 
 \item{rad_shift}{Scalar indicating the distance between each boxplot}
 
@@ -46,13 +48,19 @@ GroupedCircularBoxplot(
 
 \item{line_cols}{Vector with the same length as \code{data_in}, specifying the color of the median lines and arrows}
 
-\item{col_type}{String which doesn't do anything I thing}
-
 \item{legend_pos}{String indicating where the legend should be drawn, or "none" for no legend}
+
+\item{legend_title}{String indicating legend for title, if necessary}
 
 \item{draw_arrow}{Logical specifying if arrows pointing to each median should be drawn}
 
 \item{ordinal}{Logical, if \code{template} is NULL and \code{units} is "geographics", should the ordinal directions also be drawn?}
+
+\item{template_options}{If template is "custom", a list containing named elements "ax_labels", "lab_coord", "shift",
+and "gridlines." \code{ax_labels} is a character vector of axis labels to be plotted at the locations \code{lab_coord}, a
+numeric vector in degrees counterclockwise starting from 0. \code{shift} is a numeric value that controls how far outside
+the last boxplot the axis should be drawn, and \code{gridlines} is a logical indicating if dashed lines should be drawn at
+the specified axis labels.}
 }
 \description{
 does some stuff
