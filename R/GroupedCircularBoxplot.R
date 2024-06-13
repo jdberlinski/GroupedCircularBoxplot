@@ -275,7 +275,7 @@ GroupedCircularBoxplot <- function(
         )
       }
     } else {
-      plotrix::draw.arc(0,0,1 + delta,0,2*pi, col="gray60", lty=2, lwd = 0.5)
+      plotrix::draw.circle(0,0,1 + delta,border="gray60", lty=2, lwd = 0.5)
     }
 
     ##drawing the plot
