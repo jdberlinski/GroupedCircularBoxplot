@@ -15,6 +15,7 @@
 #' @param constant Numeric specifying the multiplicative factor determining how far whiskers extend from box. A value of
 #' "optimal" will choose values based on a von Mises distribution (see Buttarazzi et al. 2018)
 #' @param rad_shift Scalar indicating the distance between each boxplot
+#' @param lwd Scalar indicating the width of boxplot lines
 #' @param plot_cols Vector with the same length as `data_in`, specifying the color of the boxplot
 #' @param line_cols Vector with the same length as `data_in`, specifying the color of the median lines and arrows
 #' @param legend_pos String indicating where the legend should be drawn, or "none" for no legend
@@ -39,6 +40,7 @@ GroupedCircularBoxplot <- function(
   stack = FALSE,
   constant = "optimal",
   rad_shift = 0.5,
+  lwd = 1,
   plot_cols = RColorBrewer::brewer.pal(8, "Set2"),
   line_cols = RColorBrewer::brewer.pal(8, "Dark2"),
   legend_pos = "topleft",
@@ -284,6 +286,7 @@ GroupedCircularBoxplot <- function(
     if (H)
       points(circular::circular(set_1), cex=0.75, start.sep = delta)
 
+    # TODO: what does this do, exactly?
     points(circular::circular(IQR, modulo = "2pi"), cex=1.1, col="white", start.sep = delta)
 
     ## controlling wrap-around effect in case of median at pi (180?)
@@ -303,8 +306,7 @@ GroupedCircularBoxplot <- function(
         Qc      <- QAnti-circular::rad(round(circular::deg(circular::range.circular(circular::circular(IQR, modulo = "2pi")))))
         QClock  <- circular::rad(round(circular::deg(circular::circular(Qc, modulo="2pi"))))
 
-        grid <- seq(Qc, QAnti, by=0.001)
-        ngrid <- length(grid)
+        grid <- c(Qc, QAnti)
 
         astart <- QAnti
         aend <- Qc
@@ -352,8 +354,7 @@ GroupedCircularBoxplot <- function(
         Qc      <- QAnti-circular::rad(round(circular::deg(circular::range.circular(circular::circular(IQR, modulo = "2pi")))))
         QClock  <- circular::rad(round(circular::deg(circular::circular(Qc, modulo="2pi"))))
 
-        grid <- seq(Qc, QAnti, by=0.001)
-        ngrid <- length(grid)
+        grid <- c(Qc, QAnti)
 
         astart <- QAnti
         aend <- Qc
@@ -390,8 +391,7 @@ GroupedCircularBoxplot <- function(
         Qa      <- QClock+circular::range.circular(circular::circular(IQR, modulo = "2pi"))
         QAnti  <- circular::rad(round(circular::deg(circular::circular(Qa, modulo="2pi"))))
 
-        grid <- seq(QClock, Qa, by=0.001)
-        ngrid <- length(grid)
+        grid <- c(QClock, Qa)
 
         astart <- QClock
         aend <- Qa
@@ -456,8 +456,7 @@ GroupedCircularBoxplot <- function(
         Qc      <- QAnti-circular::range.circular(circular::circular(IQR, modulo = "2pi"))
         QClock  <- circular::rad(round(circular::deg(circular::circular(Qc, modulo="2pi"))))
 
-        grid <- seq(Qc, QAnti, by=0.001)
-        ngrid <- length(grid)
+        grid <- c(Qc, QAnti)
 
         astart <- QAnti
         aend <- Qc
@@ -487,8 +486,7 @@ GroupedCircularBoxplot <- function(
         Qa      <- QClock+circular::range.circular(circular::circular(IQR, modulo = "2pi"))
         QAnti  <- circular::rad(round(circular::deg(circular::circular(Qa, modulo="2pi"))))
 
-        grid <- seq(QClock, Qa, by=0.001)
-        ngrid <- length(grid)
+        grid <- c(QClock, Qa)
 
         astart <- QClock
         aend <- Qa
@@ -513,20 +511,25 @@ GroupedCircularBoxplot <- function(
 
     # draw the plot
     ### 1
-    for(i in 1:ngrid)
-      plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center = c(0,0), grid[i], col = plot_cols[curr_seq], lwd = 2)
+    plotrix::drawSectorAnnulus(
+      angle1 = grid[1],
+      angle2 = grid[2],
+      radius1 = 0.9 + delta,
+      radius2 = 1.1 + delta,
+      col = plot_cols[curr_seq]
+    )
     ### 2
-    plotrix::draw.arc(0,0,1.1 + delta,astart,aend,col=1,lwd=2)
-    plotrix::draw.arc(0,0,0.9 + delta,astart,aend,col=1,lwd=2)
+    plotrix::draw.arc(0,0,1.1 + delta,astart,aend,col=1,lwd=lwd)
+    plotrix::draw.arc(0,0,0.9 + delta,astart,aend,col=1,lwd=lwd)
     ### 3
-    plotrix::draw.radial.line(0.9 + delta,1.1 + delta,center=c(0,0),QAnti,col=1,lwd=2)
-    plotrix::draw.radial.line(0.9 + delta,1.1 + delta,center=c(0,0),QClock,col=1,lwd=2)
+    plotrix::draw.radial.line(0.9 + delta,1.1 + delta,center=c(0,0),QAnti,col=1,lwd=lwd)
+    plotrix::draw.radial.line(0.9 + delta,1.1 + delta,center=c(0,0),QClock,col=1,lwd=lwd)
     ### 4
-    plotrix::draw.arc(0,0,1 + delta,wC,QClock,col=1,lwd=2, lty=1)
-    plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wC,col=1,lwd=2)
+    plotrix::draw.arc(0,0,1 + delta,wC,QClock,col=1,lwd=lwd, lty=1)
+    plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wC,col=1,lwd=lwd)
     ### 5
-    plotrix::draw.arc(0,0,1 + delta,wA,QAnti,col=1,lwd=2, lty=1)
-    plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wA,col=1,lwd=2)
+    plotrix::draw.arc(0,0,1 + delta,wA,QAnti,col=1,lwd=lwd, lty=1)
+    plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wA,col=1,lwd=lwd)
 
     gradi <- (as.matrix(circular::deg(data[,1])))
     output <- as.matrix(cbind(data,gradi))
@@ -535,7 +538,7 @@ GroupedCircularBoxplot <- function(
 
     ## drawing an arrow indicating the median
     # med_color <- ifelse(col_type == "fill", 1, line_cols[curr_seq])
-    plotrix::draw.radial.line(0.905 + delta, 1.095 + delta, center = c(0,0), CTM, col = line_cols[curr_seq], lwd = 2)
+    plotrix::draw.radial.line(0.905 + delta, 1.095 + delta, center = c(0,0), CTM, col = line_cols[curr_seq], lwd = lwd)
     # arrows.circular(CTM, 0.78, col = line_cols[curr_seq], angle = 30, length = 0.1, )
     if (draw_arrow)
       circular::arrows.circular(CTM, 0.7, col = line_cols[curr_seq], angle = 30, length = 0.1, lwd = 2)
