@@ -17,7 +17,9 @@
 #' @param rad_shift Scalar indicating the distance between each boxplot
 #' @param lwd Scalar indicating the width of boxplot lines
 #' @param plot_cols Vector with the same length as `data_in`, specifying the color of the boxplot
-#' @param line_cols Vector with the same length as `data_in`, specifying the color of the median lines and arrows
+#' @param line_cols Vector with the same length as `data_in`, specifying the color of the median lines
+#' @param arrow_cols Vector with the same length as `data_in`, specifying the color of the arrows pointing to the
+#' medians. Default value is the same as line_cols
 #' @param legend_pos String indicating where the legend should be drawn, or "none" for no legend
 #' @param legend_title String indicating legend for title, if necessary
 #' @param draw_arrow Logical specifying if arrows pointing to each median should be drawn
@@ -43,6 +45,7 @@ GroupedCircularBoxplot <- function(
   lwd = 1,
   plot_cols = RColorBrewer::brewer.pal(8, "Set2"),
   line_cols = RColorBrewer::brewer.pal(8, "Dark2"),
+  arrow_cols = line_cols,
   legend_pos = "topleft",
   legend_title = NULL,
   draw_arrow = TRUE,
@@ -518,6 +521,8 @@ GroupedCircularBoxplot <- function(
       radius2 = 1.1 + delta,
       col = plot_cols[curr_seq]
     )
+    # draw median
+    plotrix::draw.radial.line(0.905 + delta, 1.095 + delta, center = c(0,0), CTM, col = line_cols[curr_seq], lwd = lwd)
     ### 2
     plotrix::draw.arc(0,0,1.1 + delta,astart,aend,col=1,lwd=lwd)
     plotrix::draw.arc(0,0,0.9 + delta,astart,aend,col=1,lwd=lwd)
@@ -538,10 +543,9 @@ GroupedCircularBoxplot <- function(
 
     ## drawing an arrow indicating the median
     # med_color <- ifelse(col_type == "fill", 1, line_cols[curr_seq])
-    plotrix::draw.radial.line(0.905 + delta, 1.095 + delta, center = c(0,0), CTM, col = line_cols[curr_seq], lwd = lwd)
     # arrows.circular(CTM, 0.78, col = line_cols[curr_seq], angle = 30, length = 0.1, )
     if (draw_arrow)
-      circular::arrows.circular(CTM, 0.7, col = line_cols[curr_seq], angle = 30, length = 0.1, lwd = 2)
+      circular::arrows.circular(CTM, 0.7, col = arrow_cols[curr_seq], angle = 30, length = 0.1, lwd = 2)
 
     ## output object
     out = list()

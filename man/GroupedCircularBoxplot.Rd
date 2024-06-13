@@ -15,8 +15,10 @@ GroupedCircularBoxplot(
   stack = FALSE,
   constant = "optimal",
   rad_shift = 0.5,
+  lwd = 1,
   plot_cols = RColorBrewer::brewer.pal(8, "Set2"),
   line_cols = RColorBrewer::brewer.pal(8, "Dark2"),
+  arrow_cols = line_cols,
   legend_pos = "topleft",
   legend_title = NULL,
   draw_arrow = TRUE,
@@ -44,9 +46,14 @@ GroupedCircularBoxplot(
 
 \item{rad_shift}{Scalar indicating the distance between each boxplot}
 
+\item{lwd}{Scalar indicating the width of boxplot lines}
+
 \item{plot_cols}{Vector with the same length as \code{data_in}, specifying the color of the boxplot}
 
-\item{line_cols}{Vector with the same length as \code{data_in}, specifying the color of the median lines and arrows}
+\item{line_cols}{Vector with the same length as \code{data_in}, specifying the color of the median lines}
+
+\item{arrow_cols}{Vector with the same length as \code{data_in}, specifying the color of the arrows pointing to the
+medians. Default value is the same as line_cols}
 
 \item{legend_pos}{String indicating where the legend should be drawn, or "none" for no legend}
 
