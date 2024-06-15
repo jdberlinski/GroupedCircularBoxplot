@@ -53,13 +53,27 @@ GroupedCircularBoxplot <- function(
   template_options = NULL
 ) {
 
-  # let A be a list of vectors, each to be plotted
-  n_seq <- length(data_in)
+  # if only a circular vector is passed as data in, make it a list and don't plot a legend
+  if (circular::is.circular(data_in)) {
+    data_in <- list(a = data_in)
+    legend_pos <- "none"
+  }
 
+  # error checking
+  if (!is.list(data_in))
+    stop("`data_in` must be a list of cicular vectors.")
+
+  n_seq <- length(data_in)
+  which_circ <- do.call(c, lapply(data_in, circular::is.circular))
+  if (!all(which_circ))
+    stop("`data_in` must be a list of circular vectors.")
   if (length(plot_cols) < n_seq)
     stop("Number of supplied colors is less than the number of sequences. Provide more colors.")
 
+
   shift_val <- (0:(n_seq - 1)) * rad_shift
+
+  # let A be a list of vectors, each to be plotted
 
   for (curr_seq in 1:n_seq) {
     A <- data_in[[curr_seq]]
@@ -72,7 +86,7 @@ GroupedCircularBoxplot <- function(
     if(constant=="optimal"){
       conc     <- circular::A1inv(circular::rho.circular(A))
       q1       <- circular::qvonmises(0.25, mu=circular::circular(0), kappa = conc)
-      me       <- circular::qvonmises(0.5 , mu=circular::circular(0), kappa = conc)
+      me       <- circular::qvonmises(0.5, mu=circular::circular(0), kappa = conc)
       q3       <- circular::qvonmises(0.75, mu=circular::circular(0), kappa = conc)
       box      <- range(c(q1,me,q3))
       q9965    <- circular::qvonmises(1-(0.007/2), mu=circular::circular(0),kappa = conc)
@@ -89,56 +103,66 @@ GroupedCircularBoxplot <- function(
     else if (marg == "large")
       par(mai=c(0.0,0.0,0,0))
 
-    ## inspect and re-specify the input circular vector A.
-    if(!circular::is.circular(A)) stop("argument A must be entered as a vector of class circular")
-    set1 <- circular::conversion.circular(A, units = "radians", modulo="2pi", zero=0, rotation="counter")
+    # convert A to radians
+    set1 <- circular::conversion.circular(A, units="radians", modulo="2pi", zero=0, rotation="counter")
 
     ## median and IQR
     x <- set1
-    AM <- circular::circular((circular::median.circular(x)+pi), modulo="2pi")
-    x <- as.vector(na.omit(replace(as.vector(x),as.vector(x)==as.vector(AM), NA)))
-    x2 <- as.matrix(sort(circular::circular( (x-AM), modulo="2pi")))
+    AM <- circular::median.circular(x) + pi
+    x <- x[which(x != AM)]
+    x2 <- as.matrix(sort(circular::circular(x - AM, modulo="2pi")))
 
-    AnticlockRank <- as.matrix(seq(1,length(x2), by=1))
-    ClockRank     <- as.matrix(rev(seq(1,length(x2), by=1)))
-    Combined <- cbind(AnticlockRank,ClockRank)
-    Tukeyway <- numeric(length(x2))
+    # old
+    # x <- set1
+    # AM <- circular::circular((circular::median.circular(x) + pi), modulo="2pi")
+    # x <- as.vector(na.omit(replace(as.vector(x), as.vector(x)==as.vector(AM), NA)))
+    # x2 <- as.matrix(sort(circular::circular( (x-AM), modulo="2pi")))
 
-    for(i in 1:length(x2))
-      Tukeyway[i]   <- Combined[i,][which.min((Combined[i,]))]
+    Combined <- cbind(seq_along(x2), rev(seq_along(x2)))
+    Tukeyway <- apply(Combined, 1, min)
 
-    OuterInward   <-  as.matrix(Tukeyway)
-    TukeyRanking <- as.matrix(cbind(circular::circular((x2+AM), modulo="2pi"),OuterInward))
-    colnames(TukeyRanking) <- c("observations",  "depth")
+    # Tukeyway <- numeric(length(x2))
+    # for(i in 1:length(x2))
+    #   Tukeyway[i]   <- Combined[i,][which.min((Combined[i,]))]
 
-    data <- TukeyRanking
-    data <- as.matrix(data)
-    CTM <- which(data[,2]>=which.max(data[,2]))
-    CTM <- circular::circular(mean( circular::circular(data[c(CTM), 1], modulo = "2pi")), modulo="2pi")
+    # OuterInward <- as.matrix(Tukeyway)
+    # TukeyRanking <- as.matrix(cbind(circular::circular((x2+AM), modulo="2pi"),OuterInward))
+    # data <- TukeyRanking
+    # data <- as.matrix(data)
+    data <- cbind(circular::circular(x2 + AM, modulo="2pi"), Tukeyway)
+    colnames(data) <- c("observations",  "depth")
+
+    CTM <- which(data[, 2] >= which.max(data[, 2]))
+    CTM <- circular::mean.circular(circular::circular(data[CTM, 1], modulo = "2pi"))
+    CTM <- circular::circular(CTM, modulo="2pi") # in case CTM > 2pi
+    # CTM <- circular::circular(mean(circular::circular(data[CTM, 1], modulo = "2pi")), modulo="2pi")
 
     n <- length(x)
-    depthofmedian <- round(((1+n)/2)-0.1)
+    depthofmedian <- floor((1+n) / 2)
+    # depthofmedian <- round(((1+n)/2) - 0.1)
     depthofquartiles <- (1+depthofmedian)/2
 
-    if (depthofquartiles%%1==0) {
-      quartiles <- which(data[,2] == round(1+depthofmedian)/2)
-      qA <-  circular::circular(as.vector(data[quartiles[1],1]),modulo="2pi")
-      qC <-  circular::circular(as.vector(data[quartiles[2],1]),modulo="2pi")
+    if (depthofquartiles %% 1 == 0) {
+      quartiles <- which(data[,2] == depthofquartiles)
+      # quartiles <- which(data[,2] == round(1+depthofmedian)/2)
+      qA <-  circular::circular(data[quartiles[1], 1], modulo="2pi")
+      qC <-  circular::circular(data[quartiles[2], 1], modulo="2pi")
     } else {
-      depthq1 <- depthofquartiles+0.5
-      depthq2 <- depthofquartiles-0.5
+      depthq1 <- depthofquartiles + 0.5
+      depthq2 <- depthofquartiles - 0.5
       q1 <- which(data[,2] == depthq1)
       q2 <- which(data[,2] == depthq2)
-      qA  <- mean(circular::circular(data[c(q1[1],c(q2[1])),1], modulo="2pi"))
-      qC  <- mean(circular::circular(data[c(q1[2],c(q2[2])),1], modulo="2pi"))
+      qA  <- mean(circular::circular(data[c(q1[1], q2[1]), 1], modulo="2pi"))
+      qC  <- mean(circular::circular(data[c(q1[2], q2[2]), 1], modulo="2pi"))
     }
 
     IQRdepth <- which(data[,2] >= depthofquartiles)
-    IQR <- c(data[IQRdepth,1],qA,qC)
+    IQR <- c(data[IQRdepth,1],qA,qC) # qA and qC should already be in here? unless they are an average
     IQRange <- range(c(qA,qC))
 
     set_1 <- set1
-    fi <- circular::as.circular(CTM)
+    fi <- CTM
+    # fi <- circular::as.circular(CTM) # CTM Is already circular...
 
     ##drawing the template
     if (curr_seq == 1) {
@@ -290,7 +314,9 @@ GroupedCircularBoxplot <- function(
       points(circular::circular(set_1), cex=0.75, start.sep = delta)
 
     # TODO: what does this do, exactly?
-    points(circular::circular(IQR, modulo = "2pi"), cex=1.1, col="white", start.sep = delta)
+    # it plots points over everything within the IQR, probably unnecessary,
+    # gets drawn over by the box
+    # points(circular::circular(IQR, modulo = "2pi"), cex=1.1, col="white", start.sep = delta)
 
     ## controlling wrap-around effect in case of median at pi (180?)
     if (circular::rad(round(circular::deg(circular::circular((fi+pi), modulo="2pi")))) == 0) {
