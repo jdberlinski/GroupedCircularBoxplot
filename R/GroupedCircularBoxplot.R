@@ -327,6 +327,7 @@ GroupedCircularBoxplot <- function(
     }
 
     ## controlling wrap-around effect
+    # im not touching this, its a (working) mess
     if (circular::range.circular(circular::circular(IQR, modulo = "2pi"))< ((2*pi)/(2*(constant + (1/2)))) ) {
       if (fi<pi) {
         setAnti <- subset(IQR, IQR>=fi & IQR<=AM)
@@ -539,7 +540,7 @@ GroupedCircularBoxplot <- function(
     }
 
     # draw the plot
-    ### 1
+    ### 1 draw box
     plotrix::drawSectorAnnulus(
       angle1 = grid[1],
       angle2 = grid[2],
@@ -549,12 +550,12 @@ GroupedCircularBoxplot <- function(
     )
     # draw median
     plotrix::draw.radial.line(0.905 + delta, 1.095 + delta, center = c(0,0), CTM, col = line_cols[curr_seq], lwd = lwd)
-    ### 2
-    plotrix::draw.arc(0,0,1.1 + delta,astart,aend,col=1,lwd=lwd)
-    plotrix::draw.arc(0,0,0.9 + delta,astart,aend,col=1,lwd=lwd)
+    ### 2 draw arc outline of box
+    plotrix::draw.arc(0, 0, 1.1 + delta, grid[1], grid[2], col=1, lwd=lwd)
+    plotrix::draw.arc(0, 0, 0.9 + delta, grid[1], grid[2], col=1, lwd=lwd)
     ### 3
-    plotrix::draw.radial.line(0.9 + delta,1.1 + delta,center=c(0,0),QAnti,col=1,lwd=lwd)
-    plotrix::draw.radial.line(0.9 + delta,1.1 + delta,center=c(0,0),QClock,col=1,lwd=lwd)
+    plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), QAnti, col=1, lwd=lwd)
+    plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), QClock, col=1, lwd=lwd)
     ### 4
     plotrix::draw.arc(0,0,1 + delta,wC,QClock,col=1,lwd=lwd, lty=1)
     plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wC,col=1,lwd=lwd)
