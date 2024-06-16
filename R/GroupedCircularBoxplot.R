@@ -318,12 +318,15 @@ GroupedCircularBoxplot <- function(
     # gets drawn over by the box
     # points(circular::circular(IQR, modulo = "2pi"), cex=1.1, col="white", start.sep = delta)
 
+    # is this bad?
+    round_circ <- function(x) circular::rad(round(circular::deg(x))) # round to nearest degree
+
     ## controlling wrap-around effect in case of median at pi (180?)
-    if (circular::rad(round(circular::deg(circular::circular((fi+pi), modulo="2pi")))) == 0) {
+    if (round_circ(circular::circular(fi + pi, modulo="2pi")) == 0) {
       fi <- pi
       AM<- 2*pi
     } else {
-      AM <- circular::rad(round(circular::deg(circular::circular((fi+pi), modulo="2pi"))))
+      AM <- round_circ(circular::circular(fi + pi, modulo="2pi"))
     }
 
     ## controlling wrap-around effect
@@ -332,40 +335,37 @@ GroupedCircularBoxplot <- function(
       if (fi<pi) {
         setAnti <- subset(IQR, IQR>=fi & IQR<=AM)
         setClock<- subset(IQR, IQR<=fi | IQR>=AM)
-        QAnti   <- circular::rad(round(circular::deg(circular::circular(max(setAnti), modulo="2pi"))))
-        Qc      <- QAnti-circular::rad(round(circular::deg(circular::range.circular(circular::circular(IQR, modulo = "2pi")))))
-        QClock  <- circular::rad(round(circular::deg(circular::circular(Qc, modulo="2pi"))))
+        QAnti   <- round_circ(circular::circular(max(setAnti), modulo="2pi"))
+        Qc      <- QAnti - round_circ(circular::range.circular(circular::circular(IQR, modulo = "2pi")))
+        QClock  <- round_circ(circular::circular(Qc, modulo="2pi"))
 
         grid <- c(Qc, QAnti)
 
         astart <- QAnti
         aend <- Qc
 
-        d <- (circular::rad(round(circular::deg(circular::range.circular(circular::circular(IQR, modulo = "2pi"))))))
+        d <- round_circ(circular::range.circular(circular::circular(IQR, modulo = "2pi")))
 
+        fA <- round_circ(QAnti + d*constant)
+        fC <- round_circ(QClock - d*constant)
 
-        fA<- circular::rad(round(circular::deg(QAnti + d*constant)))
-        fC<- circular::rad(round(circular::deg(QClock - d*constant)))
-
-        semicircleClock <- subset(as.vector(set_1),as.vector(set_1)<=fi | as.vector(set_1)>=AM)
-        semicircleAnti <- subset(as.vector(set_1),as.vector(set_1)>=fi & as.vector(set_1)<=AM)
-
+        semicircleClock <- subset(as.vector(set_1), as.vector(set_1) <= fi | as.vector(set_1) >= AM)
+        semicircleAnti  <- subset(as.vector(set_1), as.vector(set_1) >= fi & as.vector(set_1) <= AM)
         semicircleClock <- c(semicircleClock, QClock)
         semicircleAnti <- c(semicircleAnti, QAnti)
-        if (fC<0) {
-          swc <- subset(semicircleClock, semicircleClock>= circular::rad(round(circular::deg(circular::circular(fC, modulo="2pi"))))| semicircleClock<= QClock)
+
+        if (fC < 0) {
+          swc <- subset(semicircleClock, semicircleClock >= round_circ(circular::circular(fC, modulo="2pi")) | semicircleClock <= QClock)
           swc <- c(swc, QClock)
           whiskerC <- circular::range.circular(circular::circular(swc))
-          wC <- QClock-whiskerC
-          faroutClock  <- subset(semicircleClock, semicircleClock>=AM & semicircleClock<circular::rad(round(circular::deg(circular::circular(fC, modulo="2pi")))))
-        }
-        else if (fC>=0 & QClock>=pi){
+          wC <- QClock - whiskerC
+          faroutClock  <- subset(semicircleClock, semicircleClock >= AM & semicircleClock < round_circ(circular::circular(fC, modulo="2pi")))
+        } else if (fC >= 0 & QClock >= pi){
           swc <- subset(semicircleClock, semicircleClock>=fC)
           swc <- c(swc, QClock)
           wC <- min(swc)
           faroutClock <- subset(semicircleClock, semicircleClock>=AM & semicircleClock<fC)
-        }
-        else if (fC>=0 & QClock<pi){
+        } else if (fC >= 0 & QClock < pi){
           swc <- subset(semicircleClock, semicircleClock>=fC)
           swc <- c(swc, QClock)
           wC <- min(swc)
@@ -377,33 +377,33 @@ GroupedCircularBoxplot <- function(
         wA <- max(swa)
 
         faroutAnti  <- subset(semicircleAnti, semicircleAnti>fA)
-      } else if (fi==pi) {
+      } else if (fi == pi) {
         setAnti <- subset(IQR, IQR>=fi & IQR<=2*pi)
         setClock<- subset(IQR, IQR<=fi | IQR>=0)
-        QAnti   <- circular::rad(round(circular::deg(circular::circular(max(setAnti), modulo="2pi"))))
-        Qc      <- QAnti-circular::rad(round(circular::deg(circular::range.circular(circular::circular(IQR, modulo = "2pi")))))
-        QClock  <- circular::rad(round(circular::deg(circular::circular(Qc, modulo="2pi"))))
+        QAnti   <- round_circ(circular::circular(max(setAnti), modulo="2pi"))
+        Qc      <- QAnti - round_circ(circular::range.circular(circular::circular(IQR, modulo = "2pi")))
+        QClock  <- round_circ(circular::circular(Qc, modulo="2pi"))
 
         grid <- c(Qc, QAnti)
 
         astart <- QAnti
         aend <- Qc
 
-        d <- (circular::rad(round(circular::deg(circular::range.circular(circular::circular(IQR, modulo = "2pi"))))))
-        fA<- circular::rad(round(circular::deg(QAnti + d*constant)))
-        fC<- circular::rad(round(circular::deg(QClock - d*constant)))
+        d <- round_circ(circular::range.circular(circular::circular(IQR, modulo = "2pi")))
+        fA<- round_circ(QAnti + d*constant)
+        fC<- round_circ(QClock - d*constant)
 
         semicircleClock <- subset(as.vector(set_1),as.vector(set_1)<=fi | as.vector(set_1)>= 0)
         semicircleAnti <- subset(as.vector(set_1),as.vector(set_1)>=fi & as.vector(set_1)<= 2*pi)
 
         semicircleClock <- c(semicircleClock, QClock)
         semicircleAnti <- c(semicircleAnti, QAnti)
-        if (fC<0) {
-          swc <- subset(semicircleClock, semicircleClock>= circular::rad(round(circular::deg(circular::circular(fC, modulo="2pi"))))| semicircleClock<= QClock)
+        if (fC < 0) {
+          swc <- subset(semicircleClock, semicircleClock >= round_circ(circular::circular(fC, modulo="2pi")) | semicircleClock <= QClock)
           swc <- c(swc, QClock)
           whiskerC <- circular::range.circular(circular::circular(swc))
-          wC <- QClock-whiskerC
-          faroutClock  <- subset(semicircleClock, semicircleClock>=0 & semicircleClock<circular::rad(round(circular::deg(circular::circular(fC, modulo="2pi")))))
+          wC <- QClock - whiskerC
+          faroutClock  <- subset(semicircleClock, semicircleClock>=0 & semicircleClock<round_circ(circular::circular(fC, modulo="2pi")))
         } else if (fC>=0){
           swc <- subset(semicircleClock, semicircleClock>=fC)
           swc <- c(swc, QClock)
@@ -419,7 +419,7 @@ GroupedCircularBoxplot <- function(
         setClock<- subset(IQR, IQR<=fi & IQR>=AM)
         QClock   <- min(setClock)
         Qa      <- QClock+circular::range.circular(circular::circular(IQR, modulo = "2pi"))
-        QAnti  <- circular::rad(round(circular::deg(circular::circular(Qa, modulo="2pi"))))
+        QAnti  <- round_circ(circular::circular(Qa, modulo="2pi"))
 
         grid <- c(QClock, Qa)
 
@@ -428,8 +428,8 @@ GroupedCircularBoxplot <- function(
 
         ## defining the whiskers
         d <- circular::range.circular(circular::circular(IQR, modulo = "2pi"))
-        fC<- circular::rad(round(circular::deg(QClock - d*constant)))
-        fA<- circular::rad(round(circular::deg(QAnti + d*constant)))
+        fC<- round_circ(QClock - d*constant)
+        fA<- round_circ(QAnti + d*constant)
         semicircleClock <- subset(as.vector(set_1),as.vector(set_1)<=fi & as.vector(set_1)>=AM)
         semicircleAnti <- subset(as.vector(set_1),as.vector(set_1)>=fi | as.vector(set_1)<=AM)
 
@@ -441,7 +441,7 @@ GroupedCircularBoxplot <- function(
         faroutClock <- subset(semicircleClock, semicircleClock<fC )
 
         if (fA>2*pi ) {
-          swa <- subset(semicircleAnti, semicircleAnti<= circular::rad(round(circular::deg(circular::circular(fA, modulo="2pi")))) | semicircleAnti>= circular::rad(round(circular::deg(circular::circular(QAnti, modulo="2pi")))))
+          swa <- subset(semicircleAnti, semicircleAnti<= round_circ(circular::circular(fA, modulo="2pi")) | semicircleAnti>= round_circ(circular::circular(QAnti, modulo="2pi")))
           swa <- c(swa, QAnti)
           whiskerA <- circular::range.circular(circular::circular(swa))
           wA <- QAnti+whiskerA
@@ -482,9 +482,9 @@ GroupedCircularBoxplot <- function(
       if (fi<=pi) {
         setAnti <- subset(IQR, IQR>=fi & IQR<=AM)
         setClock<- subset(IQR, IQR<=fi | IQR>=AM)
-        QAnti   <- circular::rad(round(circular::deg(circular::circular(max(setAnti), modulo="2pi"))))
+        QAnti   <- round_circ(circular::circular(max(setAnti), modulo="2pi"))
         Qc      <- QAnti-circular::range.circular(circular::circular(IQR, modulo = "2pi"))
-        QClock  <- circular::rad(round(circular::deg(circular::circular(Qc, modulo="2pi"))))
+        QClock  <- round_circ(circular::circular(Qc, modulo="2pi"))
 
         grid <- c(Qc, QAnti)
 
@@ -514,7 +514,7 @@ GroupedCircularBoxplot <- function(
         setClock<- subset(IQR, IQR<=fi & IQR>=AM)
         QClock   <- min(setClock)
         Qa      <- QClock+circular::range.circular(circular::circular(IQR, modulo = "2pi"))
-        QAnti  <- circular::rad(round(circular::deg(circular::circular(Qa, modulo="2pi"))))
+        QAnti  <- round_circ(circular::circular(Qa, modulo="2pi"))
 
         grid <- c(QClock, Qa)
 
