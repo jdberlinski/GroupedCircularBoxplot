@@ -9,6 +9,7 @@
 #' @param template One of "degrees", "radians", "geographics", or NULL
 #' @param place If template is NULL, either "outside" or "inside" denoting where the axis should be drawn
 #' @param units If template is NULL, units to use on the drawn axis
+#' @param marg character specifying the plot region as either "large" (default) or "small".
 #' @param shrink Numeric specifying the factor by which to scale the plot. Numbers less than 1 will increase the size.
 #' @param H Logical indicating if each data point should be drawn outside the hinges of the boxplot
 #' @param stack Logical indicating if drawn points should be stacked
@@ -31,6 +32,7 @@
 #' the specified axis labels.
 #' @export
 #' @author Josh Berlinski
+#' @importFrom graphics legend text par points
 GroupedCircularBoxplot <- function(
   data_in,
   template = "degrees",
@@ -297,7 +299,7 @@ GroupedCircularBoxplot <- function(
 
     ##drawing the plot
     if (H)
-      points(circular::circular(set_1), cex=0.75, start.sep = delta)
+      circular::points.circular(circular::circular(set_1), cex=0.75, start.sep = delta)
 
     # TODO: what does this do, exactly?
     # it plots points over everything within the IQR, probably unnecessary,
