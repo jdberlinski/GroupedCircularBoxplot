@@ -112,23 +112,9 @@ GroupedCircularBoxplot <- function(
     x <- x[which(x != AM)]
     x2 <- as.matrix(sort(circular::circular(x - AM, modulo="2pi")))
 
-    # old
-    # x <- set1
-    # AM <- circular::circular((circular::median.circular(x) + pi), modulo="2pi")
-    # x <- as.vector(na.omit(replace(as.vector(x), as.vector(x)==as.vector(AM), NA)))
-    # x2 <- as.matrix(sort(circular::circular( (x-AM), modulo="2pi")))
-
     Combined <- cbind(seq_along(x2), rev(seq_along(x2)))
     Tukeyway <- apply(Combined, 1, min)
 
-    # Tukeyway <- numeric(length(x2))
-    # for(i in 1:length(x2))
-    #   Tukeyway[i]   <- Combined[i,][which.min((Combined[i,]))]
-
-    # OuterInward <- as.matrix(Tukeyway)
-    # TukeyRanking <- as.matrix(cbind(circular::circular((x2+AM), modulo="2pi"),OuterInward))
-    # data <- TukeyRanking
-    # data <- as.matrix(data)
     data <- cbind(circular::circular(x2 + AM, modulo="2pi"), Tukeyway)
     colnames(data) <- c("observations",  "depth")
 
