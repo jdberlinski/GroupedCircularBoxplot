@@ -560,7 +560,7 @@ GroupedCircularBoxplot <- function(
     # med_color <- ifelse(col_type == "fill", 1, line_cols[curr_seq])
     # arrows.circular(CTM, 0.78, col = line_cols[curr_seq], angle = 30, length = 0.1, )
     if (draw_arrow)
-      circular::arrows.circular(CTM, 0.7, col = arrow_cols[curr_seq], angle = 30, length = 0.1, lwd = 2)
+      circular::arrows.circular(CTM, 0.7, col = arrow_cols[curr_seq], angle = 30, length = 0.1, lwd = lwd)
 
     ## output object
     out = list()
