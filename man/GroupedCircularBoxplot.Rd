@@ -72,8 +72,10 @@ the last boxplot the axis should be drawn, and \code{gridlines} is a logical ind
 the specified axis labels.}
 }
 \description{
-does some stuff
+Given a named list of circular objects, create a grouped circular boxplot.
 }
 \author{
 Josh Berlinski
+
+Davide Buttarazzi
 }

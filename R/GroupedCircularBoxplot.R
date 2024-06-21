@@ -1,9 +1,15 @@
 # adapted from CircularBoxplot from Buttarazzi D., Pandolfo G., Porzio G.C. (2018). A boxplot for circular data, Biometrics.
+# the original function is also available in package 'bpDir' as 'CircularBoxplot'
 # modified by josh berlinski
+
+# TODO:
+#   - return (invisible) list object similar to original function
+#   - add example in documentation, potentially make a nicer description
+#   - (low prio) make axis labels look nicer by default
 
 #' Create grouped circular boxplot
 #'
-#' @description does some stuff
+#' @description Given a named list of circular objects, create a grouped circular boxplot.
 #'
 #' @param data_in List of circular objects to be plotted
 #' @param template One of "degrees", "radians", "geographics", or NULL
@@ -32,6 +38,7 @@
 #' the specified axis labels.
 #' @export
 #' @author Josh Berlinski
+#' @author Davide Buttarazzi
 #' @importFrom graphics legend text par points
 GroupedCircularBoxplot <- function(
   data_in,
