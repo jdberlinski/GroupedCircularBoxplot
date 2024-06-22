@@ -549,8 +549,8 @@ GroupedCircularBoxplot <- function(
     plotrix::draw.arc(0, 0, 1.1 + delta, grid[1], grid[2], col=1, lwd=lwd)
     plotrix::draw.arc(0, 0, 0.9 + delta, grid[1], grid[2], col=1, lwd=lwd)
     ### 3
-    plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), QAnti, col=1, lwd=lwd)
-    plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), QClock, col=1, lwd=lwd)
+    plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), grid[1], col=1, lwd=lwd)
+    plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), grid[2], col=1, lwd=lwd)
     ### 4
     plotrix::draw.arc(0,0,1 + delta,wC,QClock,col=1,lwd=lwd, lty=1)
     plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wC,col=1,lwd=lwd)
