@@ -36,6 +36,8 @@
 #' numeric vector in degrees counterclockwise starting from 0. `shift` is a numeric value that controls how far outside
 #' the last boxplot the axis should be drawn, and `gridlines` is a logical indicating if dashed lines should be drawn at
 #' the specified axis labels.
+#' @param minimal Logical. If true, a simple colored line and point will replace the box and median line. Radial lines
+#' at fence points will also not be drawn
 #' @export
 #' @author Josh Berlinski
 #' @author Davide Buttarazzi
@@ -59,7 +61,8 @@ GroupedCircularBoxplot <- function(
   legend_title = NULL,
   draw_arrow = TRUE,
   ordinal = FALSE,
-  template_options = NULL
+  template_options = NULL,
+  minimal = FALSE
 ) {
 
   # if only a circular vector is passed as data in, make it a list and don't plot a legend
@@ -67,6 +70,9 @@ GroupedCircularBoxplot <- function(
     data_in <- list(a = data_in)
     legend_pos <- "none"
   }
+
+  if (!(box_style %in% c("tukey", "tufte")))
+    stop("`box_style` must be one of 'tukey' or 'tufte'")
 
   # error checking
   if (!is.list(data_in))
@@ -536,27 +542,34 @@ GroupedCircularBoxplot <- function(
 
     # draw the plot
     ### 1 draw box
-    plotrix::drawSectorAnnulus(
-      angle1 = grid[1],
-      angle2 = grid[2],
-      radius1 = 0.9 + delta,
-      radius2 = 1.1 + delta,
-      col = plot_cols[curr_seq]
-    )
-    # draw median
-    plotrix::draw.radial.line(0.905 + delta, 1.095 + delta, center = c(0,0), CTM, col = line_cols[curr_seq], lwd = lwd)
-    ### 2 draw arc outline of box
-    plotrix::draw.arc(0, 0, 1.1 + delta, grid[1], grid[2], col=1, lwd=lwd)
-    plotrix::draw.arc(0, 0, 0.9 + delta, grid[1], grid[2], col=1, lwd=lwd)
-    ### 3
-    plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), grid[1], col=1, lwd=lwd)
-    plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), grid[2], col=1, lwd=lwd)
-    ### 4
-    plotrix::draw.arc(0,0,1 + delta,wC,QClock,col=1,lwd=lwd, lty=1)
-    plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wC,col=1,lwd=lwd)
-    ### 5
-    plotrix::draw.arc(0,0,1 + delta,wA,QAnti,col=1,lwd=lwd, lty=1)
-    plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wA,col=1,lwd=lwd)
+    if (!minimal) {
+      plotrix::drawSectorAnnulus(
+        angle1 = grid[1],
+        angle2 = grid[2],
+        radius1 = 0.9 + delta,
+        radius2 = 1.1 + delta,
+        col = plot_cols[curr_seq]
+      )
+      # draw median
+      plotrix::draw.radial.line(0.905 + delta, 1.095 + delta, center = c(0,0), CTM, col = line_cols[curr_seq], lwd = lwd)
+      ### 2 draw arc outline of box
+      plotrix::draw.arc(0, 0, 1.1 + delta, grid[1], grid[2], col=1, lwd=lwd)
+      plotrix::draw.arc(0, 0, 0.9 + delta, grid[1], grid[2], col=1, lwd=lwd)
+      ### 3
+      plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), grid[1], col=1, lwd=lwd)
+      plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), grid[2], col=1, lwd=lwd)
+      ### 4
+      plotrix::draw.arc(0,0,1 + delta,wC,QClock,col=1,lwd=lwd, lty=1)
+      plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wC,col=1,lwd=lwd)
+      ### 5
+      plotrix::draw.arc(0,0,1 + delta,wA,QAnti,col=1,lwd=lwd, lty=1)
+      plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wA,col=1,lwd=lwd)
+    } else {
+      plotrix::draw.arc(0,0,1 + delta,wC,QClock,col=1,lwd=0.25*lwd, lty=1)
+      plotrix::draw.arc(0,0,1 + delta,wA,QAnti,col=1,lwd=0.25*lwd, lty=1)
+      plotrix::draw.arc(0, 0, 1 + delta, grid[1], grid[2], col=plot_cols[curr_seq], lwd=lwd)
+      circular::points.circular(CTM, cex=0.75, start.sep = delta, col=line_cols[curr_seq])
+    }
 
     gradi <- (as.matrix(circular::deg(data[,1])))
     output <- as.matrix(cbind(data,gradi))

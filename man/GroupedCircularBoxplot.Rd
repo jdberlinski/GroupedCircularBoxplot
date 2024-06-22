@@ -23,7 +23,8 @@ GroupedCircularBoxplot(
   legend_title = NULL,
   draw_arrow = TRUE,
   ordinal = FALSE,
-  template_options = NULL
+  template_options = NULL,
+  minimal = FALSE
 )
 }
 \arguments{
@@ -70,6 +71,9 @@ and "gridlines." \code{ax_labels} is a character vector of axis labels to be plo
 numeric vector in degrees counterclockwise starting from 0. \code{shift} is a numeric value that controls how far outside
 the last boxplot the axis should be drawn, and \code{gridlines} is a logical indicating if dashed lines should be drawn at
 the specified axis labels.}
+
+\item{minimal}{Logical. If true, a simple colored line and point will replace the box and median line. Radial lines
+at fence points will also not be drawn}
 }
 \description{
 Given a named list of circular objects, create a grouped circular boxplot.
