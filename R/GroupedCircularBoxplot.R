@@ -71,9 +71,6 @@ GroupedCircularBoxplot <- function(
     legend_pos <- "none"
   }
 
-  if (!(box_style %in% c("tukey", "tufte")))
-    stop("`box_style` must be one of 'tukey' or 'tufte'")
-
   # error checking
   if (!is.list(data_in))
     stop("`data_in` must be a list of cicular vectors.")
