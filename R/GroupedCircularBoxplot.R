@@ -38,6 +38,7 @@
 #' the specified axis labels.
 #' @param minimal Logical. If true, a simple colored line and point will replace the box and median line. Radial lines
 #' at fence points will also not be drawn
+#' @param scale_widths Logical, should the width of each boxplot be scaled based on it's distance from the center?
 #' @export
 #' @author Josh Berlinski
 #' @author Davide Buttarazzi
@@ -62,7 +63,8 @@ GroupedCircularBoxplot <- function(
   draw_arrow = TRUE,
   ordinal = FALSE,
   template_options = NULL,
-  minimal = FALSE
+  minimal = FALSE,
+  scale_widths = FALSE
 ) {
 
   # if only a circular vector is passed as data in, make it a list and don't plot a legend
@@ -84,6 +86,8 @@ GroupedCircularBoxplot <- function(
 
 
   shift_val <- (0:(n_seq - 1)) * rad_shift
+  size_val <- rev(1:n_seq * rad_shift)
+
 
   # let A be a list of vectors, each to be plotted
 
@@ -540,21 +544,24 @@ GroupedCircularBoxplot <- function(
     # draw the plot
     ### 1 draw box
     if (!minimal) {
+      size_ctrl <- ifelse(scale_widths, sqrt(size_val[curr_seq]), 1)
+      tmp <- 1 + delta
+
       plotrix::drawSectorAnnulus(
         angle1 = grid[1],
         angle2 = grid[2],
-        radius1 = 0.9 + delta,
-        radius2 = 1.1 + delta,
+        radius1 = tmp - 0.1*size_ctrl,
+        radius2 = tmp + 0.1*size_ctrl,
         col = plot_cols[curr_seq]
       )
       # draw median
-      plotrix::draw.radial.line(0.905 + delta, 1.095 + delta, center = c(0,0), CTM, col = line_cols[curr_seq], lwd = lwd)
+      plotrix::draw.radial.line(tmp - 0.095*size_ctrl, tmp + 0.095*size_ctrl, center = c(0,0), CTM, col = line_cols[curr_seq], lwd = lwd)
       ### 2 draw arc outline of box
-      plotrix::draw.arc(0, 0, 1.1 + delta, grid[1], grid[2], col=1, lwd=lwd)
-      plotrix::draw.arc(0, 0, 0.9 + delta, grid[1], grid[2], col=1, lwd=lwd)
+      plotrix::draw.arc(0, 0, tmp + 0.1*size_ctrl, grid[1], grid[2], col=1, lwd=lwd)
+      plotrix::draw.arc(0, 0, tmp - 0.1*size_ctrl, grid[1], grid[2], col=1, lwd=lwd)
       ### 3
-      plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), grid[1], col=1, lwd=lwd)
-      plotrix::draw.radial.line(0.9 + delta, 1.1 + delta, center=c(0,0), grid[2], col=1, lwd=lwd)
+      plotrix::draw.radial.line(tmp - 0.1*size_ctrl, tmp + 0.1*size_ctrl, center=c(0,0), grid[1], col=1, lwd=lwd)
+      plotrix::draw.radial.line(tmp - 0.1*size_ctrl, tmp + 0.1*size_ctrl, center=c(0,0), grid[2], col=1, lwd=lwd)
       ### 4
       plotrix::draw.arc(0,0,1 + delta,wC,QClock,col=1,lwd=lwd, lty=1)
       plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wC,col=1,lwd=lwd)
