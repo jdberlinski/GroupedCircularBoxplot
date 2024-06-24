@@ -24,7 +24,8 @@ GroupedCircularBoxplot(
   draw_arrow = TRUE,
   ordinal = FALSE,
   template_options = NULL,
-  minimal = FALSE
+  minimal = FALSE,
+  scale_widths = FALSE
 )
 }
 \arguments{
@@ -74,6 +75,8 @@ the specified axis labels.}
 
 \item{minimal}{Logical. If true, a simple colored line and point will replace the box and median line. Radial lines
 at fence points will also not be drawn}
+
+\item{scale_widths}{Logical, should the width of each boxplot be scaled based on it's distance from the center?}
 }
 \description{
 Given a named list of circular objects, create a grouped circular boxplot.
