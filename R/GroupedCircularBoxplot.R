@@ -53,7 +53,7 @@ GroupedCircularBoxplot <- function(
   H = FALSE,
   stack = FALSE,
   constant = "optimal",
-  rad_shift = 0.5,
+  rad_shift = 0.25,
   lwd = 1,
   plot_cols = RColorBrewer::brewer.pal(8, "Set2"),
   line_cols = RColorBrewer::brewer.pal(8, "Dark2"),
@@ -86,7 +86,7 @@ GroupedCircularBoxplot <- function(
 
 
   shift_val <- (0:(n_seq - 1)) * rad_shift
-  size_val <- rev(1:n_seq * rad_shift)
+  size_val <- 1 / sqrt(1 + shift_val)
 
 
   # let A be a list of vectors, each to be plotted
@@ -544,7 +544,7 @@ GroupedCircularBoxplot <- function(
     # draw the plot
     ### 1 draw box
     if (!minimal) {
-      size_ctrl <- ifelse(scale_widths, sqrt(size_val[curr_seq]), 1)
+      size_ctrl <- ifelse(scale_widths, size_val[curr_seq], 1)
       tmp <- 1 + delta
 
       plotrix::drawSectorAnnulus(
