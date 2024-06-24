@@ -38,7 +38,7 @@
 #' the specified axis labels.
 #' @param minimal Logical. If true, a simple colored line and point will replace the box and median line. Radial lines
 #' at fence points will also not be drawn
-#' @param scale_widths Logical, should the width of each boxplot be scaled based on it's distance from the center?
+#' @param scale_widths Logical, should the width of each boxplot be scaled based on (the square root of) it's distance from the center?
 #' @export
 #' @author Josh Berlinski
 #' @author Davide Buttarazzi
