@@ -3,7 +3,6 @@
 # modified by josh berlinski
 
 # TODO:
-#   - return (invisible) list object similar to original function
 #   - add example in documentation, potentially make a nicer description
 #   - (low prio) make axis labels look nicer by default
 
@@ -88,6 +87,10 @@ GroupedCircularBoxplot <- function(
 
   shift_val <- (0:(n_seq - 1)) * rad_shift
   size_val <- 1 / sqrt(1 + shift_val)
+
+  # output list
+  summary_output <- vector(mode = "list", length = n_seq)
+  names(summary_output) <- names(data_in)
 
   for (curr_seq in 1:n_seq) {
     A <- data_in[[curr_seq]]
@@ -599,7 +602,6 @@ GroupedCircularBoxplot <- function(
     else{out$farout = c("no far out values detected")}
 
     out$constant = constant
-
     summaryStatistics = data.frame(
       CircularMedian = as.numeric(circular::deg(circular::circular(fi, modulo="2pi"))),
       CounterClockwiseHinge = as.numeric(circular::deg(circular::circular(QAnti, modulo="2pi"))),
@@ -607,11 +609,10 @@ GroupedCircularBoxplot <- function(
       CounterClockwiseWhisker = as.numeric(circular::deg(circular::circular(wA, modulo="2pi"))),
       ClockwiseWhisker = as.numeric(circular::deg(circular::circular(wC, modulo="2pi")))
     )
-
     out$statistics = summaryStatistics
-
+    summary_output[[curr_seq]] <- out
   }
   points(0,0,pch=21, bg=1,  cex=1.1) # redraw center point, for fun
-  return(invisible(out))
+  return(invisible(summary_output))
 
 }
