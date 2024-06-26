@@ -39,6 +39,7 @@
 #' @param minimal Logical. If true, a simple colored line and point will replace the box and median line. Radial lines
 #' at fence points will also not be drawn
 #' @param scale_widths Logical, should the width of each boxplot be scaled based on (the square root of) it's distance from the center?
+#' @param arrow_width Numeric controlling the width of the arrow drawn pointing to each median. Defaults to `lwd`.
 #' @export
 #' @author Josh Berlinski
 #' @author Davide Buttarazzi
@@ -64,7 +65,8 @@ GroupedCircularBoxplot <- function(
   ordinal = FALSE,
   template_options = NULL,
   minimal = FALSE,
-  scale_widths = FALSE
+  scale_widths = FALSE,
+  arrow_width = lwd
 ) {
 
   # if only a circular vector is passed as data in, make it a list and don't plot a legend
@@ -84,12 +86,8 @@ GroupedCircularBoxplot <- function(
   if (length(plot_cols) < n_seq)
     stop("Number of supplied colors is less than the number of sequences. Provide more colors.")
 
-
   shift_val <- (0:(n_seq - 1)) * rad_shift
   size_val <- 1 / sqrt(1 + shift_val)
-
-
-  # let A be a list of vectors, each to be plotted
 
   for (curr_seq in 1:n_seq) {
     A <- data_in[[curr_seq]]
@@ -111,8 +109,8 @@ GroupedCircularBoxplot <- function(
     }
 
     # TODO: find some way to reset the graphics parameters without nuking layouts
-    # oldpar <- par(no.readonly = TRUE)
-    # on.exit(par(oldpar))
+    oldpar <- par(no.readonly = TRUE)
+    on.exit(par(oldpar))
 
     if (marg == "small")
       par(oma=c(0,0,0,0))
@@ -231,7 +229,11 @@ GroupedCircularBoxplot <- function(
             cos(circular::rad(circular::circular(rad_grid))),
             sin(circular::rad(circular::circular(rad_grid)))
           )
-          shift <- max(shift_val) + 1
+          shift <- max(shift_val) + 4 * rad_shift
+          # if (minimal)
+          #   shift <- max(shift_val) + 0.5
+          # else
+          #   shift <- max(shift_val) + 1
           coord_offset <- cbind(
             shift * cos(circular::rad(circular::circular(rad_grid))),
             shift * sin(circular::rad(circular::circular(rad_grid)))
@@ -293,7 +295,7 @@ GroupedCircularBoxplot <- function(
         )
         if(template=="degrees") {
           ax_labels <- c("0","90","180","270")
-          tmult <- 0.82
+          tmult <- .8
         } else if(template=="radians") {
           ax_labels <- c(expression(0,frac(pi,2),pi,frac(3*pi,2)))
           tmult <- 0.65
@@ -304,7 +306,7 @@ GroupedCircularBoxplot <- function(
 
         text(
           tmult * circular::circular(lab_coord[,1], units = "radians"), tmult * circular::circular(lab_coord[,2], units = "radians"),
-          labels = ax_labels, cex=0.6
+          labels = ax_labels, cex=1
         )
       }
     } else {
@@ -314,11 +316,6 @@ GroupedCircularBoxplot <- function(
     ##drawing the plot
     if (H)
       circular::points.circular(circular::circular(set_1), cex=0.75, start.sep = delta)
-
-    # TODO: what does this do, exactly?
-    # it plots points over everything within the IQR, probably unnecessary,
-    # gets drawn over by the box
-    # points(circular::circular(IQR, modulo = "2pi"), cex=1.1, col="white", start.sep = delta)
 
     # is this bad?
     round_circ <- function(x) circular::rad(round(circular::deg(x))) # round to nearest degree
@@ -474,10 +471,17 @@ GroupedCircularBoxplot <- function(
         circular::points.circular(faroutvalues, cex=0.8, col="white", start.sep = delta)
         circular::points.circular(faroutvalues, cex=0.8, pch=8, start.sep = delta)
       } else {
-        if (stack)
-          circular::points.circular(faroutvalues, cex=0.6, stack=stack, bins=500, sep=0.1, pch=8, start.sep = delta)
-        else
-          circular::points.circular(faroutvalues, cex=0.6, stack=stack, pch=8, start.sep = delta)
+        if (minimal) {
+          if (stack)
+            circular::points.circular(faroutvalues, cex=0.5, stack=stack, bins=500, sep=0.1, pch=8, start.sep = delta, col="gray30")
+          else
+            circular::points.circular(faroutvalues, cex=0.5, stack=stack, pch=8, start.sep = delta, col="gray30")
+        } else {
+          if (stack)
+            circular::points.circular(faroutvalues, cex=0.6, stack=stack, bins=500, sep=0.1, pch=8, start.sep = delta)
+          else
+            circular::points.circular(faroutvalues, cex=0.6, stack=stack, pch=8, start.sep = delta)
+        }
       }
     } else {
       # case when range(box)>= (360/2(c+1/2))
@@ -569,8 +573,8 @@ GroupedCircularBoxplot <- function(
       plotrix::draw.arc(0,0,1 + delta,wA,QAnti,col=1,lwd=lwd, lty=1)
       plotrix::draw.radial.line(0.95 + delta,1.05 + delta,center=c(0,0),wA,col=1,lwd=lwd)
     } else {
-      plotrix::draw.arc(0,0,1 + delta,wC,QClock,col=1,lwd=0.25*lwd, lty=1)
-      plotrix::draw.arc(0,0,1 + delta,wA,QAnti,col=1,lwd=0.25*lwd, lty=1)
+      plotrix::draw.arc(0,0,1 + delta,wC,QClock,col="gray30",lwd=0.25*lwd, lty=1)
+      plotrix::draw.arc(0,0,1 + delta,wA,QAnti,col="gray30",lwd=0.25*lwd, lty=1)
       plotrix::draw.arc(0, 0, 1 + delta, grid[1], grid[2], col=plot_cols[curr_seq], lwd=lwd)
       circular::points.circular(CTM, cex=0.75, start.sep = delta, col=line_cols[curr_seq])
     }
@@ -584,7 +588,7 @@ GroupedCircularBoxplot <- function(
     # med_color <- ifelse(col_type == "fill", 1, line_cols[curr_seq])
     # arrows.circular(CTM, 0.78, col = line_cols[curr_seq], angle = 30, length = 0.1, )
     if (draw_arrow)
-      circular::arrows.circular(CTM, 0.7, col = arrow_cols[curr_seq], angle = 30, length = 0.1, lwd = lwd)
+      circular::arrows.circular(CTM, 0.7, col = arrow_cols[curr_seq], angle = 30, length = 0.1, lwd = arrow_width)
 
     ## output object
     out = list()
