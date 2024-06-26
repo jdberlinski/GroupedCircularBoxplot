@@ -3,7 +3,6 @@
 # modified by josh berlinski
 
 # TODO:
-#   - add example in documentation, potentially make a nicer description
 #   - (low prio) make axis labels look nicer by default
 
 #' Create grouped circular boxplot
@@ -39,6 +38,16 @@
 #' at fence points will also not be drawn
 #' @param scale_widths Logical, should the width of each boxplot be scaled based on (the square root of) it's distance from the center?
 #' @param arrow_width Numeric controlling the width of the arrow drawn pointing to each median. Defaults to `lwd`.
+#' @examples
+#' library(circular)
+#' library(GroupedCircularBoxplot)
+#' set.seed(123)
+#' data <- list(
+#'     x = rvonmises(100, circular(pi), 5),
+#'     y = rvonmises(100, circular(pi/2), 2.5),
+#'     z = rvonmises(100, circular(7*pi/4), 8)
+#' )
+#' GroupedCircularBoxplot(data)
 #' @export
 #' @author Josh Berlinski
 #' @author Davide Buttarazzi

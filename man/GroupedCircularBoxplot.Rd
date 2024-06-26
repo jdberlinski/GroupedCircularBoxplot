@@ -14,7 +14,7 @@ GroupedCircularBoxplot(
   H = FALSE,
   stack = FALSE,
   constant = "optimal",
-  rad_shift = 0.5,
+  rad_shift = 0.25,
   lwd = 1,
   plot_cols = RColorBrewer::brewer.pal(8, "Set2"),
   line_cols = RColorBrewer::brewer.pal(8, "Dark2"),
@@ -25,7 +25,8 @@ GroupedCircularBoxplot(
   ordinal = FALSE,
   template_options = NULL,
   minimal = FALSE,
-  scale_widths = FALSE
+  scale_widths = FALSE,
+  arrow_width = lwd
 )
 }
 \arguments{
@@ -77,9 +78,22 @@ the specified axis labels.}
 at fence points will also not be drawn}
 
 \item{scale_widths}{Logical, should the width of each boxplot be scaled based on (the square root of) it's distance from the center?}
+
+\item{arrow_width}{Numeric controlling the width of the arrow drawn pointing to each median. Defaults to \code{lwd}.}
 }
 \description{
 Given a named list of circular objects, create a grouped circular boxplot.
+}
+\examples{
+library(circular)
+library(GroupedCircularBoxplot)
+set.seed(123)
+data <- list(
+    x = rvonmises(100, circular(pi), 5),
+    y = rvonmises(100, circular(pi/2), 2.5),
+    z = rvonmises(100, circular(7*pi/4), 8)
+)
+GroupedCircularBoxplot(data)
 }
 \author{
 Josh Berlinski
