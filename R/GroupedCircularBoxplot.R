@@ -39,6 +39,7 @@
 #' @param scale_widths Logical, should the width of each boxplot be scaled based on (the square root of) it's distance from the center?
 #' @param arrow_width Numeric controlling the width of the arrow drawn pointing to each median. Defaults to `lwd`.
 #' @param restore_pars Logical indicating if the original graphics parameters should be restored after building the plot. `FALSE` is useful when making multiple plots using something like `layout()`.
+#' @param paired_groups Logical. If `TRUE`, every other boxplot will be drawn adjacent to the previous. Useful when each successive group is related to each other for comparison. Works best when `scale_widths = FALSE`.
 #' @examples
 #' library(circular)
 #' library(GroupedCircularBoxplot)
@@ -76,7 +77,8 @@ GroupedCircularBoxplot <- function(
   minimal = FALSE,
   scale_widths = FALSE,
   arrow_width = lwd,
-  restore_pars = TRUE
+  restore_pars = TRUE,
+  paired_groups = FALSE
 ) {
 
   # if only a circular vector is passed as data in, make it a list and don't plot a legend
@@ -97,6 +99,11 @@ GroupedCircularBoxplot <- function(
     stop("Number of supplied colors is less than the number of sequences. Provide more colors.")
 
   shift_val <- (0:(n_seq - 1)) * rad_shift
+  if (paired_groups) {
+    if (length(data_in) %% 2)
+      stop("`paired_groups = TRUE` requires an even number of groups.")
+    shift_val[c(FALSE, TRUE)] <- shift_val[c(FALSE, TRUE)] - (rad_shift - 0.2)
+  }
   size_val <- 1 / sqrt(1 + shift_val)
 
   # output list
