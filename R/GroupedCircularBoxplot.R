@@ -38,6 +38,7 @@
 #' at fence points will also not be drawn
 #' @param scale_widths Logical, should the width of each boxplot be scaled based on (the square root of) it's distance from the center?
 #' @param arrow_width Numeric controlling the width of the arrow drawn pointing to each median. Defaults to `lwd`.
+#' @param restore_pars Logical indicating if the original graphics parameters should be restored after building the plot. `FALSE` is useful when making multiple plots using something like `layout()`.
 #' @examples
 #' library(circular)
 #' library(GroupedCircularBoxplot)
@@ -74,7 +75,8 @@ GroupedCircularBoxplot <- function(
   template_options = NULL,
   minimal = FALSE,
   scale_widths = FALSE,
-  arrow_width = lwd
+  arrow_width = lwd,
+  restore_pars = TRUE
 ) {
 
   # if only a circular vector is passed as data in, make it a list and don't plot a legend
@@ -121,8 +123,10 @@ GroupedCircularBoxplot <- function(
     }
 
     # TODO: find some way to reset the graphics parameters without nuking layouts
-    oldpar <- par(no.readonly = TRUE)
-    on.exit(par(oldpar))
+    if (restore_pars) {
+      oldpar <- par(no.readonly = TRUE)
+      on.exit(par(oldpar))
+    }
 
     if (marg == "small")
       par(oma=c(0,0,0,0))
