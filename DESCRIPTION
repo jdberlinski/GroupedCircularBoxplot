@@ -2,13 +2,16 @@ Package: GroupedCircularBoxplot
 Title: Grouped Circular Boxplots for Circular Data
 Version: 0.1.0
 Authors@R:
-    person("Josh", "Berlinski", , "josh.berlinski@gmail.com", role = c("aut", "cre"))
+    person("Josh", "Berlinski", , "josh.berlinski@gmail.com", role = c("aut", "cre"),
+    person("Fan", "Dai", role = "aut",
+                    email = "fand@mtu.edu"))
 Description: Create grouped boxplots for comparison of circular data across groups.
 License: GPL-2
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports:
     circular,
     plotrix,
+    rgl,
     RColorBrewer
